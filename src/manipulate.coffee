@@ -87,6 +87,9 @@ $("#c").on("mousedown", (e) ->
 
   $(document).on("mousemove", move)
   $(document).on("mouseup", up)
+
+  e.preventDefault()
+  return true
 )
 
 

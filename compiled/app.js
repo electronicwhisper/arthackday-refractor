@@ -62,7 +62,7 @@
 
   vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = (vertexPosition.xy + 1.0) * 0.5;\n}";
 
-  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D img;\n\nuniform mat3 m1;\nuniform mat3 m2;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  p = m1 * p;\n  p.x = abs(p.x);\n  p = m2 * p;\n\n  gl_FragColor = texture2D(img, p.xy);\n}";
+  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D img;\n\nuniform mat3 m1;\nuniform mat3 m2;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  p = vec3(length(p.xy), atan(p.y / p.x), 1.);\n  p = m1 * p;\n  p.x = fract(p.x);\n  p = m2 * p;\n  p = vec3(p.x * cos(p.y), p.x * sin(p.y), 1.);\n\n  gl_FragColor = texture2D(img, p.xy);\n}";
 
   s = shader({
     canvas: $("#c")[0],
@@ -197,7 +197,9 @@
       return $(document).off("mouseup", up);
     };
     $(document).on("mousemove", move);
-    return $(document).on("mouseup", up);
+    $(document).on("mouseup", up);
+    e.preventDefault();
+    return true;
   });
 
   placeTouchHint = function() {
@@ -428,6 +430,37 @@ to set uniforms,
 
 }).call(this);
 }, "state": function(exports, require, module) {(function() {
+  var distortions, model;
+
+  distortions = [
+    {
+      title: "Reflect",
+      f: "p.x = abs(p.x)"
+    }, {
+      title: "Repeat",
+      f: "p.x = fract(p.x)"
+    }, {
+      title: "Clamp",
+      f: "p.x = min(p.x, 0.)"
+    }, {
+      title: "Step",
+      f: "p.x = floor(p.x)"
+    }, {
+      title: "Sine",
+      f: "p.x = sin(p.x)"
+    }
+  ];
+
+  model = {
+    distortions: distortions,
+    chain: [],
+    transform: numeric.identity(3)
+  };
+
+  model.chain.push({
+    transform: numeric.identity(3),
+    distortion: distortions[0]
+  });
 
   module.exports = {
     matrix: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
