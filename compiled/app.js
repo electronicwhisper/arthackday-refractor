@@ -49,32 +49,23 @@
   }
   return this.require.define;
 }).call(this)({"app": function(exports, require, module) {(function() {
-  var canvas, dist, draw, eventPosition, flattenMatrix, fragmentSrc, matrix, s, shader, solve, vertexSrc;
+
+  require("manipulate");
+
+}).call(this);
+}, "draw": function(exports, require, module) {(function() {
+  var draw, flattenMatrix, fragmentSrc, s, shader, state, vertexSrc;
 
   shader = require("shader");
 
-  solve = require("solve");
-
-  dist = function(p1, p2) {
-    var d;
-    d = numeric['-'](p1, p2);
-    return numeric.dot(d, d);
-  };
+  state = require("state");
 
   vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = (vertexPosition.xy + 1.0) * 0.5;\n}";
 
-  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D img;\n\nuniform mat3 m1;\nuniform mat3 m2;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  p = m1 * p;\n  //p.x = mod(p.x, .5);\n  //p = m2 * p;\n\n  gl_FragColor = texture2D(img, p.xy);\n}";
-
-  canvas = $("#c")[0];
-
-  matrix = [[2, 0, 0], [0, 1, 0], [0, 0, 1]];
-
-  flattenMatrix = function(m) {
-    return _.flatten(numeric.transpose(m));
-  };
+  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D img;\n\nuniform mat3 m1;\nuniform mat3 m2;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  p = m1 * p;\n  p.x = mod(p.x, .5);\n  p = m2 * p;\n\n  gl_FragColor = texture2D(img, p.xy);\n}";
 
   s = shader({
-    canvas: canvas,
+    canvas: $("#c")[0],
     vertex: vertexSrc,
     fragment: fragmentSrc
   });
@@ -87,7 +78,13 @@
     });
   });
 
+  flattenMatrix = function(m) {
+    return _.flatten(numeric.transpose(m));
+  };
+
   draw = function() {
+    var matrix;
+    matrix = state.matrix;
     return s.draw({
       uniforms: {
         m1: flattenMatrix(matrix),
@@ -97,6 +94,24 @@
   };
 
   draw();
+
+  module.exports = draw;
+
+}).call(this);
+}, "manipulate": function(exports, require, module) {(function() {
+  var dist, draw, eventPosition, solve, state;
+
+  solve = require("solve");
+
+  state = require("state");
+
+  draw = require("draw");
+
+  dist = function(p1, p2) {
+    var d;
+    d = numeric['-'](p1, p2);
+    return numeric.dot(d, d);
+  };
 
   eventPosition = function(e) {
     var $el, height, offset, width, x, y;
@@ -112,13 +127,13 @@
   $("#c").on("mousedown", function(e) {
     var downLocal, downPosition, move, up;
     downPosition = eventPosition(e);
-    downLocal = numeric.dot(matrix, downPosition);
+    downLocal = numeric.dot(state.matrix, downPosition);
     move = function(e) {
       var movePosition, transform;
       movePosition = eventPosition(e);
       transform = solve(function(m) {
         var moveLocal, newMatrix;
-        newMatrix = numeric.dot(m, matrix);
+        newMatrix = numeric.dot(m, state.matrix);
         moveLocal = numeric.dot(newMatrix, movePosition);
         return dist(moveLocal, downLocal);
       }, function(_arg) {
@@ -126,7 +141,7 @@
         x = _arg[0], y = _arg[1];
         return [[1, 0, x], [0, 1, y], [0, 0, 1]];
       }, [0, 0]);
-      matrix = numeric.dot(transform, matrix);
+      state.matrix = numeric.dot(transform, state.matrix);
       return draw();
     };
     up = function(e) {
@@ -347,6 +362,13 @@ to set uniforms,
   };
 
   module.exports = solve;
+
+}).call(this);
+}, "state": function(exports, require, module) {(function() {
+
+  module.exports = {
+    matrix: [[2, 0, 0], [0, 1, 0], [0, 0, 1]]
+  };
 
 }).call(this);
 }});
