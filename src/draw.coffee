@@ -28,7 +28,7 @@ void main() {
   vec3 p = vec3(position, 1.);
 
   p = m1 * p;
-  p.x = mod(p.x, .5);
+  p.x = abs(p.x);
   p = m2 * p;
 
   gl_FragColor = texture2D(img, p.xy);

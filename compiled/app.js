@@ -62,7 +62,7 @@
 
   vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = (vertexPosition.xy + 1.0) * 0.5;\n}";
 
-  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D img;\n\nuniform mat3 m1;\nuniform mat3 m2;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  p = m1 * p;\n  p.x = mod(p.x, .5);\n  p = m2 * p;\n\n  gl_FragColor = texture2D(img, p.xy);\n}";
+  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D img;\n\nuniform mat3 m1;\nuniform mat3 m2;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  p = m1 * p;\n  p.x = abs(p.x);\n  p = m2 * p;\n\n  gl_FragColor = texture2D(img, p.xy);\n}";
 
   s = shader({
     canvas: $("#c")[0],
@@ -99,7 +99,7 @@
 
 }).call(this);
 }, "manipulate": function(exports, require, module) {(function() {
-  var dist, draw, eventPosition, solve, state;
+  var dist, draw, eventPosition, lastLocal, lastPosition, placeTouchHint, solve, solveTouch, state;
 
   solve = require("solve");
 
@@ -124,33 +124,96 @@
     return [x, y, 1];
   };
 
-  $("#c").on("mousedown", function(e) {
-    var downLocal, downPosition, move, up;
-    downPosition = eventPosition(e);
-    downLocal = numeric.dot(state.matrix, downPosition);
-    move = function(e) {
-      var movePosition, transform;
-      movePosition = eventPosition(e);
-      transform = solve(function(m) {
-        var moveLocal, newMatrix;
-        newMatrix = numeric.dot(m, state.matrix);
-        moveLocal = numeric.dot(newMatrix, movePosition);
-        return dist(moveLocal, downLocal);
-      }, function(_arg) {
+  solveTouch = function(touches) {
+    var objective, transform;
+    objective = function(m) {
+      var currentLocal, error, newMatrix, touch, _i, _len;
+      newMatrix = numeric.dot(m, state.matrix);
+      error = 0;
+      for (_i = 0, _len = touches.length; _i < _len; _i++) {
+        touch = touches[_i];
+        currentLocal = numeric.dot(newMatrix, touch.current);
+        error += dist(touch.original, currentLocal);
+      }
+      return error;
+    };
+    if (touches.length === 1) {
+      transform = solve(objective, function(_arg) {
         var x, y;
         x = _arg[0], y = _arg[1];
         return [[1, 0, x], [0, 1, y], [0, 0, 1]];
       }, [0, 0]);
-      state.matrix = numeric.dot(transform, state.matrix);
+    } else if (touches.length === 2) {
+      transform = solve(objective, function(_arg) {
+        var r, s, x, y;
+        s = _arg[0], r = _arg[1], x = _arg[2], y = _arg[3];
+        return [[s, r, x], [-r, s, y], [0, 0, 1]];
+      }, [1, 0, 0, 0]);
+    }
+    return state.matrix = numeric.dot(transform, state.matrix);
+  };
+
+  lastPosition = false;
+
+  lastLocal = false;
+
+  $("#c").on("mousedown", function(e) {
+    var downLocal, downPosition, move, up;
+    downPosition = eventPosition(e);
+    downLocal = numeric.dot(state.matrix, downPosition);
+    if (!key.shift) {
+      $(".touch-hint").css({
+        display: "none"
+      });
+    }
+    move = function(e) {
+      var movePosition;
+      movePosition = eventPosition(e);
+      if (key.shift) {
+        solveTouch([
+          {
+            original: downLocal,
+            current: movePosition
+          }, {
+            original: lastLocal,
+            current: lastPosition
+          }
+        ]);
+      } else {
+        solveTouch([
+          {
+            original: downLocal,
+            current: movePosition
+          }
+        ]);
+      }
       return draw();
     };
     up = function(e) {
+      lastPosition = eventPosition(e);
+      lastLocal = numeric.dot(state.matrix, lastPosition);
+      placeTouchHint();
       $(document).off("mousemove", move);
       return $(document).off("mouseup", up);
     };
     $(document).on("mousemove", move);
     return $(document).on("mouseup", up);
   });
+
+  placeTouchHint = function() {
+    var $el, height, offset, width, x, y;
+    $el = $("#c");
+    offset = $el.offset();
+    width = $el.width();
+    height = $el.height();
+    x = lastPosition[0] * width + offset.left;
+    y = (1 - lastPosition[1]) * height + offset.top;
+    return $(".touch-hint").css({
+      display: "block",
+      left: x,
+      top: y
+    });
+  };
 
 }).call(this);
 }, "shader": function(exports, require, module) {
@@ -367,7 +430,7 @@ to set uniforms,
 }, "state": function(exports, require, module) {(function() {
 
   module.exports = {
-    matrix: [[2, 0, 0], [0, 1, 0], [0, 0, 1]]
+    matrix: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
   };
 
 }).call(this);

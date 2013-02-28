@@ -6,6 +6,17 @@
 body {
   background-color: #eee;
 }
+.touch-hint {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  margin-top: -6px;
+  border-radius: 6px;
+  background-color: rgba(0,0,0,0.5);
+  top: 0px;
+  left: 0px;
+}
 </style>
 </head>
 <body>
@@ -14,6 +25,7 @@ body {
 
 <canvas id="c" width="600" height="600"></canvas>
 
+<div class="touch-hint"></div>
 
 <script src="vendor/underscore-min.js"></script>
 <script src="vendor/jquery-1.8.3.min.js"></script>
