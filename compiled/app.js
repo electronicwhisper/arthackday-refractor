@@ -49,21 +49,29 @@
   }
   return this.require.define;
 }).call(this)({"app": function(exports, require, module) {(function() {
-  var canvas, fragmentSrc, s, shader, vertexSrc;
+  var canvas, draw, flattenMatrix, fragmentSrc, localCoords, matrix, s, shader, vertexSrc;
 
   shader = require("shader");
 
   vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = (vertexPosition.xy + 1.0) * 0.5;\n}";
 
-  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D img;\n\nvoid main() {\n  gl_FragColor = texture2D(img, position);\n}";
+  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D img;\n\nuniform mat3 m;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  p = m * p;\n\n  gl_FragColor = texture2D(img, p.xy);\n}";
 
   canvas = $("#c")[0];
+
+  matrix = [[2, 0, 0], [0, 1, 0], [0, 0, 1]];
+
+  flattenMatrix = function(m) {
+    return _.flatten(numeric.transpose(m));
+  };
 
   s = shader({
     canvas: canvas,
     vertex: vertexSrc,
     fragment: fragmentSrc,
-    uniforms: {}
+    uniforms: {
+      m: flattenMatrix(matrix)
+    }
   });
 
   $("#totoro").on("load", function(e) {
@@ -72,6 +80,45 @@
         img: $("#totoro")[0]
       }
     });
+  });
+
+  draw = function() {
+    return s.draw({
+      uniforms: {
+        m: flattenMatrix(matrix)
+      }
+    });
+  };
+
+  localCoords = function(e) {
+    var $el, height, offset, width, x, y;
+    $el = $(e.target);
+    offset = $el.offset();
+    width = $el.width();
+    height = $el.height();
+    x = (e.pageX - offset.left) / width;
+    y = 1 - (e.pageY - offset.top) / height;
+    return [x, y];
+  };
+
+  $("#c").on("mousedown", function(e) {
+    var downMatrix, downPosition, move, up;
+    downPosition = localCoords(e);
+    downMatrix = numeric.clone(matrix);
+    move = function(e) {
+      var movePosition, offset, offsetMatrix;
+      movePosition = localCoords(e);
+      offset = numeric.sub(downPosition, movePosition);
+      offsetMatrix = [[1, 0, offset[0]], [0, 1, offset[1]], [0, 0, 1]];
+      matrix = numeric.dot(offsetMatrix, downMatrix);
+      return draw();
+    };
+    up = function(e) {
+      $(document).off("mousemove", move);
+      return $(document).off("mouseup", up);
+    };
+    $(document).on("mousemove", move);
+    return $(document).on("mouseup", up);
   });
 
 }).call(this);
@@ -172,6 +219,8 @@ to set uniforms,
             return gl.uniform3fv(location, value);
           case 4:
             return gl.uniform4fv(location, value);
+          case 9:
+            return gl.uniformMatrix3fv(location, false, value);
         }
       } else if (value.nodeName) {
         texture = getTexture(value);

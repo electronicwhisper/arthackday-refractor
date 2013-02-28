@@ -113,6 +113,8 @@ module.exports = (opts) ->
         when 2 then gl.uniform2fv(location, value)
         when 3 then gl.uniform3fv(location, value)
         when 4 then gl.uniform4fv(location, value)
+        # TODO: the following is hacky
+        when 9 then gl.uniformMatrix3fv(location, false, value)
 
     else if value.nodeName # looks like a DOM element
       texture = getTexture(value)
