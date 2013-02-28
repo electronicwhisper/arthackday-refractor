@@ -6,6 +6,13 @@
 body {
   background-color: #eee;
 }
+#canvas-div {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+}
 .touch-hint {
   position: absolute;
   width: 12px;
@@ -23,7 +30,9 @@ body {
 
 <img id="totoro" src="totoro.jpg" style="display: none" />
 
-<canvas id="c" width="600" height="600"></canvas>
+<div id="canvas-div">
+  <canvas id="c"></canvas>
+</div>
 
 <div class="touch-hint"></div>
 

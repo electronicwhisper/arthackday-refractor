@@ -6,5 +6,12 @@ build next version of internal representation
   build ui for it
 
 
+pass in resolution
+pass in image resolution
+black outside of border
+show where identity is?
+
+
 minor
   make it not clamp to edge but be transparent/black
+  make resize work in shader.coffee
