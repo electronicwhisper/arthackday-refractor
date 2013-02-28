@@ -21,12 +21,15 @@ precision mediump float;
 varying vec2 position;
 uniform sampler2D img;
 
-uniform mat3 m;
+uniform mat3 m1;
+uniform mat3 m2;
 
 void main() {
   vec3 p = vec3(position, 1.);
 
-  p = m * p;
+  p = m1 * p;
+  p.x = abs(p.x);
+  p = m2 * p;
 
   gl_FragColor = texture2D(img, p.xy);
 }
@@ -34,7 +37,7 @@ void main() {
 
 canvas = $("#c")[0]
 
-matrix = [[2, 0, 0],
+matrix = [[1, 0, 0],
           [0, 1, 0],
           [0, 0, 1]]
 
@@ -45,10 +48,8 @@ s = shader({
   canvas: canvas
   vertex: vertexSrc
   fragment: fragmentSrc
-  uniforms: {
-    m: flattenMatrix(matrix)
-  }
 })
+
 $("#totoro").on("load", (e) ->
   s.draw({
     uniforms: {
@@ -60,10 +61,11 @@ $("#totoro").on("load", (e) ->
 draw = ->
   s.draw({
     uniforms: {
-      m: flattenMatrix(matrix)
+      m1: flattenMatrix(matrix)
+      m2: flattenMatrix(numeric.inv(matrix))
     }
   })
-
+draw()
 
 localCoords = (e) ->
   $el = $(e.target)
@@ -102,6 +104,8 @@ $("#c").on("mousedown", (e) ->
 
 
 
+
+window.s = s
 
 
 

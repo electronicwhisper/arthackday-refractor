@@ -55,11 +55,11 @@
 
   vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = (vertexPosition.xy + 1.0) * 0.5;\n}";
 
-  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D img;\n\nuniform mat3 m;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  p = m * p;\n\n  gl_FragColor = texture2D(img, p.xy);\n}";
+  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D img;\n\nuniform mat3 m1;\nuniform mat3 m2;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  p = m1 * p;\n  p.x = abs(p.x);\n  p = m2 * p;\n\n  gl_FragColor = texture2D(img, p.xy);\n}";
 
   canvas = $("#c")[0];
 
-  matrix = [[2, 0, 0], [0, 1, 0], [0, 0, 1]];
+  matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
 
   flattenMatrix = function(m) {
     return _.flatten(numeric.transpose(m));
@@ -68,10 +68,7 @@
   s = shader({
     canvas: canvas,
     vertex: vertexSrc,
-    fragment: fragmentSrc,
-    uniforms: {
-      m: flattenMatrix(matrix)
-    }
+    fragment: fragmentSrc
   });
 
   $("#totoro").on("load", function(e) {
@@ -85,10 +82,13 @@
   draw = function() {
     return s.draw({
       uniforms: {
-        m: flattenMatrix(matrix)
+        m1: flattenMatrix(matrix),
+        m2: flattenMatrix(numeric.inv(matrix))
       }
     });
   };
+
+  draw();
 
   localCoords = function(e) {
     var $el, height, offset, width, x, y;
@@ -120,6 +120,8 @@
     $(document).on("mousemove", move);
     return $(document).on("mouseup", up);
   });
+
+  window.s = s;
 
 }).call(this);
 }, "shader": function(exports, require, module) {
