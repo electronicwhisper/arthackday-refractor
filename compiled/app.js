@@ -55,7 +55,7 @@
 
   vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = (vertexPosition.xy + 1.0) * 0.5;\n}";
 
-  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\n\nvoid main() {\n  gl_FragColor.r = position.x;\n  gl_FragColor.g = position.y;\n  gl_FragColor.b = 0.0;\n  gl_FragColor.a = 1.0;\n}";
+  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D img;\n\nvoid main() {\n  gl_FragColor = texture2D(img, position);\n}";
 
   canvas = $("#c")[0];
 
@@ -66,7 +66,13 @@
     uniforms: {}
   });
 
-  s.draw();
+  $("#totoro").on("load", function(e) {
+    return s.draw({
+      uniforms: {
+        img: $("#totoro")[0]
+      }
+    });
+  });
 
 }).call(this);
 }, "shader": function(exports, require, module) {

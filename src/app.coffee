@@ -18,12 +18,10 @@ fragmentSrc = """
 precision mediump float;
 
 varying vec2 position;
+uniform sampler2D img;
 
 void main() {
-  gl_FragColor.r = position.x;
-  gl_FragColor.g = position.y;
-  gl_FragColor.b = 0.0;
-  gl_FragColor.a = 1.0;
+  gl_FragColor = texture2D(img, position);
 }
 """
 
@@ -35,4 +33,12 @@ s = shader({
   fragment: fragmentSrc
   uniforms: {}
 })
-s.draw()
+
+
+$("#totoro").on("load", (e) ->
+  s.draw({
+    uniforms: {
+      img: $("#totoro")[0]
+    }
+  })
+)
