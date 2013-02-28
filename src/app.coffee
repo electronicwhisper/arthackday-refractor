@@ -1,4 +1,9 @@
 shader = require("shader")
+solve = require("solve")
+
+dist = (p1, p2) ->
+  d = numeric['-'](p1, p2)
+  numeric.dot(d, d)
 
 
 
@@ -28,8 +33,8 @@ void main() {
   vec3 p = vec3(position, 1.);
 
   p = m1 * p;
-  p.x = abs(p.x);
-  p = m2 * p;
+  //p.x = mod(p.x, .5);
+  //p = m2 * p;
 
   gl_FragColor = texture2D(img, p.xy);
 }
@@ -37,7 +42,7 @@ void main() {
 
 canvas = $("#c")[0]
 
-matrix = [[1, 0, 0],
+matrix = [[2, 0, 0],
           [0, 1, 0],
           [0, 0, 1]]
 
@@ -67,8 +72,8 @@ draw = ->
   })
 draw()
 
-localCoords = (e) ->
-  $el = $(e.target)
+eventPosition = (e) ->
+  $el = $("#c")
   offset = $el.offset()
   width = $el.width()
   height = $el.height()
@@ -76,20 +81,30 @@ localCoords = (e) ->
   x = (e.pageX - offset.left) / width
   y = 1 - (e.pageY - offset.top ) / height
 
-  return [x, y]
+  return [x, y, 1]
 
 
 $("#c").on("mousedown", (e) ->
-  downPosition = localCoords(e)
-  downMatrix = numeric.clone(matrix)
+  downPosition = eventPosition(e)
+  downLocal = numeric.dot(matrix, downPosition)
 
   move = (e) ->
-    movePosition = localCoords(e)
-    offset = numeric.sub(downPosition, movePosition)
-    offsetMatrix = [[1, 0, offset[0]],
-                    [0, 1, offset[1]],
-                    [0, 0, 1]]
-    matrix = numeric.dot(offsetMatrix, downMatrix)
+    movePosition = eventPosition(e)
+
+    transform = solve(
+      (m) ->
+        newMatrix = numeric.dot(m, matrix)
+        moveLocal = numeric.dot(newMatrix, movePosition)
+        dist(moveLocal, downLocal)
+      , ([x, y]) ->
+        [[1, 0, x],
+         [0, 1, y],
+         [0, 0, 1]]
+      , [0, 0]
+    )
+
+    matrix = numeric.dot(transform, matrix)
+
     draw()
 
   up = (e) ->
@@ -100,12 +115,6 @@ $("#c").on("mousedown", (e) ->
   $(document).on("mouseup", up)
 )
 
-
-
-
-
-
-window.s = s
 
 
 

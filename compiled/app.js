@@ -49,17 +49,25 @@
   }
   return this.require.define;
 }).call(this)({"app": function(exports, require, module) {(function() {
-  var canvas, draw, flattenMatrix, fragmentSrc, localCoords, matrix, s, shader, vertexSrc;
+  var canvas, dist, draw, eventPosition, flattenMatrix, fragmentSrc, matrix, s, shader, solve, vertexSrc;
 
   shader = require("shader");
 
+  solve = require("solve");
+
+  dist = function(p1, p2) {
+    var d;
+    d = numeric['-'](p1, p2);
+    return numeric.dot(d, d);
+  };
+
   vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = (vertexPosition.xy + 1.0) * 0.5;\n}";
 
-  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D img;\n\nuniform mat3 m1;\nuniform mat3 m2;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  p = m1 * p;\n  p.x = abs(p.x);\n  p = m2 * p;\n\n  gl_FragColor = texture2D(img, p.xy);\n}";
+  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D img;\n\nuniform mat3 m1;\nuniform mat3 m2;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  p = m1 * p;\n  //p.x = mod(p.x, .5);\n  //p = m2 * p;\n\n  gl_FragColor = texture2D(img, p.xy);\n}";
 
   canvas = $("#c")[0];
 
-  matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+  matrix = [[2, 0, 0], [0, 1, 0], [0, 0, 1]];
 
   flattenMatrix = function(m) {
     return _.flatten(numeric.transpose(m));
@@ -90,27 +98,35 @@
 
   draw();
 
-  localCoords = function(e) {
+  eventPosition = function(e) {
     var $el, height, offset, width, x, y;
-    $el = $(e.target);
+    $el = $("#c");
     offset = $el.offset();
     width = $el.width();
     height = $el.height();
     x = (e.pageX - offset.left) / width;
     y = 1 - (e.pageY - offset.top) / height;
-    return [x, y];
+    return [x, y, 1];
   };
 
   $("#c").on("mousedown", function(e) {
-    var downMatrix, downPosition, move, up;
-    downPosition = localCoords(e);
-    downMatrix = numeric.clone(matrix);
+    var downLocal, downPosition, move, up;
+    downPosition = eventPosition(e);
+    downLocal = numeric.dot(matrix, downPosition);
     move = function(e) {
-      var movePosition, offset, offsetMatrix;
-      movePosition = localCoords(e);
-      offset = numeric.sub(downPosition, movePosition);
-      offsetMatrix = [[1, 0, offset[0]], [0, 1, offset[1]], [0, 0, 1]];
-      matrix = numeric.dot(offsetMatrix, downMatrix);
+      var movePosition, transform;
+      movePosition = eventPosition(e);
+      transform = solve(function(m) {
+        var moveLocal, newMatrix;
+        newMatrix = numeric.dot(m, matrix);
+        moveLocal = numeric.dot(newMatrix, movePosition);
+        return dist(moveLocal, downLocal);
+      }, function(_arg) {
+        var x, y;
+        x = _arg[0], y = _arg[1];
+        return [[1, 0, x], [0, 1, y], [0, 0, 1]];
+      }, [0, 0]);
+      matrix = numeric.dot(transform, matrix);
       return draw();
     };
     up = function(e) {
@@ -120,8 +136,6 @@
     $(document).on("mousemove", move);
     return $(document).on("mouseup", up);
   });
-
-  window.s = s;
 
 }).call(this);
 }, "shader": function(exports, require, module) {
@@ -303,6 +317,36 @@ to set uniforms,
       }
     };
   };
+
+}).call(this);
+}, "solve": function(exports, require, module) {(function() {
+  var solve;
+
+  solve = function(objective, argsToMatrix, startArgs) {
+    var error, m, obj, original, solution, uncmin;
+    original = argsToMatrix(startArgs);
+    obj = function(args) {
+      var matrix;
+      matrix = argsToMatrix(args);
+      return objective(matrix);
+    };
+    uncmin = numeric.uncmin(obj, startArgs);
+    if (isNaN(uncmin.f)) {
+      console.warn("NaN");
+      return original;
+    } else {
+      error = obj(uncmin.solution);
+      if (error > .000001) {
+        console.warn("Error too big", error);
+        return original;
+      }
+      solution = uncmin.solution;
+      m = argsToMatrix(solution);
+      return m;
+    }
+  };
+
+  module.exports = solve;
 
 }).call(this);
 }});
