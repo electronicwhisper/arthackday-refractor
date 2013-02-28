@@ -1,0 +1,4 @@
+get flatrenderer in
+get it rendering an image
+figure out how to do a matrix transform
+make moveable mirror
