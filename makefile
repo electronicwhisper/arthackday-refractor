@@ -1,5 +1,5 @@
-SRC = $(shell find src -name "*.coffee")
+SRC = $(shell find web/src -name "*.coffee")
 
-compiled: $(SRC)
-	node compile.js
-	touch compiled
+web/compiled: $(SRC)
+	node web/compile.js
+	touch web/compiled

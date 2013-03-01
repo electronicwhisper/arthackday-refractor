@@ -8,7 +8,7 @@ var package = stitch.createPackage({
 
 package.compile(function (err, source){
   if (err) throw err;
-  fs.writeFile('compiled/app.js', source, function (err) {
+  fs.writeFile(__dirname + '/compiled/app.js', source, function (err) {
     if (err) throw err;
     console.log('Compiled compiled/app.js');
   })
