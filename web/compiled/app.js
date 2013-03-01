@@ -294,7 +294,7 @@
 
   bounds = require("bounds");
 
-  vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\nuniform vec2 boundsMin;\nuniform vec2 boundsMax;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = mix(boundsMin, boundsMax, (vertexPosition.xy + 1.0) * 0.5);\n}";
+  vertexSrc = "precision highp float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\nuniform vec2 boundsMin;\nuniform vec2 boundsMax;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = mix(boundsMin, boundsMax, (vertexPosition.xy + 1.0) * 0.5);\n}";
 
   fragmentSrc = generate.code();
 
@@ -353,7 +353,7 @@
   generate.code = function() {
     var c, code, f, i, _i, _j, _len, _len1, _ref, _ref1;
     code = "";
-    code += "\nprecision mediump float;\n\nvarying vec2 position;\nuniform sampler2D image;\nuniform vec2 resolution;\nuniform vec2 imageResolution;\n";
+    code += "\nprecision highp float;\n\nvarying vec2 position;\nuniform sampler2D image;\nuniform vec2 resolution;\nuniform vec2 imageResolution;\n";
     _ref = _.reverse(state.chain);
     for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
       c = _ref[i];

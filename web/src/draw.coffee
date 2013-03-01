@@ -5,7 +5,7 @@ bounds = require("bounds")
 
 
 vertexSrc = """
-precision mediump float;
+precision highp float;
 
 attribute vec3 vertexPosition;
 varying vec2 position;

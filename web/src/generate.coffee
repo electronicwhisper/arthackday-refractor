@@ -7,7 +7,7 @@ generate.code = ->
 
   code += """
 
-    precision mediump float;
+    precision highp float;
 
     varying vec2 position;
     uniform sampler2D image;
