@@ -24,17 +24,18 @@ distortions = [
 ]
 
 
-model = new ReactiveScope({
+state = new ReactiveScope({
   distortions: distortions
   chain: []
+  selected: false
   transform: numeric.identity(3)
 })
 
-model.chain.push({
-  transform: numeric.identity(3)
-  distortion: distortions[0]
-})
+state.watch("selected", "chain", ->
+  if state.selected && !_.contains(state.chain, state.selected)
+    state.selected = false
+)
 
 
 
-module.exports = model
+module.exports = state

@@ -188,7 +188,7 @@
 
 }).call(this);
 }, "app": function(exports, require, module) {(function() {
-  var canvas, state;
+  var canvas, koState, koUpdate, state;
 
   _.reverse = function(a) {
     return a.slice().reverse();
@@ -206,13 +206,57 @@
 
   state = require("state");
 
-  $("#add").on("click", function(e) {
-    return state.apply(function() {
-      return state.chain.push({
+  $(document).on("click", ".button-add", function(e) {
+    state.apply(function() {
+      var c;
+      c = {
         transform: numeric.identity(3),
         distortion: _.shuffle(state.distortions)[0]
-      });
+      };
+      state.chain.push(c);
+      return state.selected = c;
     });
+    return false;
+  });
+
+  $(document).on("click", ".button-remove", function(e) {
+    var c;
+    c = ko.dataFor(this);
+    state.apply(function() {
+      return state.chain = _.without(state.chain, c);
+    });
+    return false;
+  });
+
+  $(document).on("click", ".distortion", function(e) {
+    var c;
+    c = ko.dataFor(this);
+    state.apply(function() {
+      return state.selected = c;
+    });
+    return false;
+  });
+
+  $(document).on("click", "#sidebar", function(e) {
+    return state.apply(function() {
+      return state.selected = false;
+    });
+  });
+
+  koState = ko.observable();
+
+  koUpdate = function() {
+    return koState(state);
+  };
+
+  koUpdate();
+
+  state.watch("chain", "selected", function() {
+    return koUpdate();
+  });
+
+  ko.applyBindings({
+    koState: koState
   });
 
 }).call(this);
@@ -560,7 +604,7 @@ to set uniforms,
 
 }).call(this);
 }, "state": function(exports, require, module) {(function() {
-  var ReactiveScope, distortions, model;
+  var ReactiveScope, distortions, state;
 
   ReactiveScope = require("ReactiveScope");
 
@@ -583,18 +627,20 @@ to set uniforms,
     }
   ];
 
-  model = new ReactiveScope({
+  state = new ReactiveScope({
     distortions: distortions,
     chain: [],
+    selected: false,
     transform: numeric.identity(3)
   });
 
-  model.chain.push({
-    transform: numeric.identity(3),
-    distortion: distortions[0]
+  state.watch("selected", "chain", function() {
+    if (state.selected && !_.contains(state.chain, state.selected)) {
+      return state.selected = false;
+    }
   });
 
-  module.exports = model;
+  module.exports = state;
 
 }).call(this);
 }, "touch": function(exports, require, module) {(function() {
@@ -660,11 +706,19 @@ to set uniforms,
   };
 
   getMatrix = function() {
-    return _.last(state.chain).transform;
+    if (state.selected) {
+      return state.selected.transform;
+    } else {
+      return state.transform;
+    }
   };
 
   setMatrix = function(m) {
-    return _.last(state.chain).transform = m;
+    if (state.selected) {
+      return state.selected.transform = m;
+    } else {
+      return state.transform = m;
+    }
   };
 
   tracking = {};

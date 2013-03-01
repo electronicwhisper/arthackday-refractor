@@ -64,10 +64,18 @@ solveTouch = (touches, matrix) ->
 
 
 getMatrix = ->
-  _.last(state.chain).transform
+  if state.selected
+    state.selected.transform
+  else
+    state.transform
+  # _.last(state.chain).transform
 
 setMatrix = (m) ->
-  _.last(state.chain).transform = m
+  if state.selected
+    state.selected.transform = m
+  else
+    state.transform = m
+  # _.last(state.chain).transform = m
 
 
 
