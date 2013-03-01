@@ -28,11 +28,6 @@ model = new ReactiveScope({
   distortions: distortions
   chain: []
   transform: numeric.identity(3)
-
-  # legacy:
-  matrix: [[1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]]
 })
 
 model.chain.push({

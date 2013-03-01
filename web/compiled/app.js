@@ -586,8 +586,7 @@ to set uniforms,
   model = new ReactiveScope({
     distortions: distortions,
     chain: [],
-    transform: numeric.identity(3),
-    matrix: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    transform: numeric.identity(3)
   });
 
   model.chain.push({
