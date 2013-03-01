@@ -188,6 +188,15 @@
 
 }).call(this);
 }, "app": function(exports, require, module) {(function() {
+  var canvas;
+
+  canvas = $("#c")[0];
+
+  canvas.width = $("#c").parent().width();
+
+  canvas.height = $("#c").parent().height();
+
+  require("draw");
 
   require("touch");
 
@@ -706,52 +715,118 @@ to set uniforms,
 
 }).call(this);
 }, "touch": function(exports, require, module) {(function() {
-  var canvas, debug, touches;
+  var bounds, debug, dist, eventPosition, getMatrix, lerp, setMatrix, solve, solveTouch, state, tracking, update;
 
-  canvas = $("#c")[0];
+  solve = require("solve");
 
-  debug = function() {
-    return $("#debug").html(JSON.stringify(touches));
+  state = require("state");
+
+  bounds = require("bounds");
+
+  dist = function(p1, p2) {
+    var d;
+    d = numeric['-'](p1, p2);
+    return numeric.dot(d, d);
   };
 
-  touches = {};
+  lerp = function(x, min, max) {
+    return min + x * (max - min);
+  };
+
+  eventPosition = function(e) {
+    var $el, b, height, offset, width, x, y;
+    $el = $("#c");
+    offset = $el.offset();
+    width = $el.width();
+    height = $el.height();
+    x = (e.pageX - offset.left) / width;
+    y = 1 - (e.pageY - offset.top) / height;
+    b = bounds();
+    x = lerp(x, b.boundsMin[0], b.boundsMax[0]);
+    y = lerp(y, b.boundsMin[1], b.boundsMax[1]);
+    return [x, y, 1];
+  };
+
+  solveTouch = function(touches, matrix) {
+    var objective, transform;
+    objective = function(m) {
+      var currentLocal, error, newMatrix, touch, _i, _len;
+      newMatrix = numeric.dot(m, matrix);
+      error = 0;
+      for (_i = 0, _len = touches.length; _i < _len; _i++) {
+        touch = touches[_i];
+        currentLocal = numeric.dot(newMatrix, touch.current);
+        error += dist(touch.original, currentLocal);
+      }
+      return error;
+    };
+    if (touches.length === 1) {
+      transform = solve(objective, function(_arg) {
+        var x, y;
+        x = _arg[0], y = _arg[1];
+        return [[1, 0, x], [0, 1, y], [0, 0, 1]];
+      }, [0, 0]);
+    } else if (touches.length === 2) {
+      transform = solve(objective, function(_arg) {
+        var r, s, x, y;
+        s = _arg[0], r = _arg[1], x = _arg[2], y = _arg[3];
+        return [[s, r, x], [-r, s, y], [0, 0, 1]];
+      }, [1, 0, 0, 0]);
+    }
+    return numeric.dot(transform, matrix);
+  };
+
+  getMatrix = function() {
+    return state.chain[0].transform;
+  };
+
+  setMatrix = function(m) {
+    return state.chain[0].transform = m;
+  };
+
+  tracking = {};
+
+  debug = function() {
+    return $("#debug").html(JSON.stringify(tracking));
+  };
+
+  update = function(touches) {
+    var ids, matrix, newMatrix, t, touch, _i, _len;
+    matrix = getMatrix();
+    ids = [];
+    for (_i = 0, _len = touches.length; _i < _len; _i++) {
+      touch = touches[_i];
+      ids.push(touch.identifier);
+      if (t = tracking[touch.identifier]) {
+        t.current = eventPosition(touch);
+      } else {
+        t = tracking[touch.identifier] = {};
+        t.current = eventPosition(touch);
+        t.original = numeric.dot(matrix, t.current);
+      }
+    }
+    tracking = _.pick(tracking, ids);
+    newMatrix = solveTouch(_.values(tracking), matrix);
+    state.apply(function() {
+      return setMatrix(newMatrix);
+    });
+    return debug();
+  };
 
   document.addEventListener("touchstart", function(e) {
-    var t, touch, _i, _len, _ref;
-    _ref = e.changedTouches;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      touch = _ref[_i];
-      t = touches[touch.identifier] = {};
-      t.x = touch.pageX;
-      t.y = touch.pageY;
-    }
-    return debug();
+    return update(e.touches);
   }, false);
 
   document.addEventListener("touchend", function(e) {
-    var touch, _i, _len, _ref;
-    _ref = e.changedTouches;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      touch = _ref[_i];
-      delete touches[touch.identifier];
-    }
-    return debug();
+    return update(e.touches);
   }, false);
 
   document.addEventListener("touchmove", function(e) {
-    var t, touch, _i, _len, _ref;
-    _ref = e.changedTouches;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      touch = _ref[_i];
-      t = touches[touch.identifier];
-      t.x = touch.pageX;
-      t.y = touch.pageY;
-    }
-    debug();
+    update(e.touches);
     return e.preventDefault();
   }, false);
 
-  $("#debug").html("init!");
+  $("#debug").html(JSON.stringify(bounds()));
 
 }).call(this);
 }});

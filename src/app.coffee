@@ -1,9 +1,13 @@
+canvas = $("#c")[0]
+canvas.width  = $("#c").parent().width()
+canvas.height = $("#c").parent().height()
+
 # require("draw")
 # require("manipulate")
 
 
 
-
+require("draw")
 require("touch")
 
 
