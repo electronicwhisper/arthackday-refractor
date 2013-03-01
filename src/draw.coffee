@@ -31,7 +31,7 @@ void main() {
 
   //p = vec3(length(p.xy), atan(p.y / p.x), 1.);
   p = m1 * p;
-  p.x = abs(p.x);
+  p.x = fract(p.x);
   p = m2 * p;
   //p = vec3(p.x * cos(p.y), p.x * sin(p.y), 1.);
 

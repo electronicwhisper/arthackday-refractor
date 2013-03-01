@@ -6,9 +6,7 @@ build next version of internal representation
   build ui for it
 
 
-pass in resolution
-pass in image resolution
-black outside of border
+make it centered, not stretched
 show where identity is?
 
 

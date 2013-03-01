@@ -62,7 +62,7 @@
 
   vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = (vertexPosition.xy + 1.0) * 0.5;\n}";
 
-  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D image;\nuniform vec2 resolution;\nuniform vec2 imageResolution;\n\nuniform mat3 m1;\nuniform mat3 m2;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  //p = vec3(length(p.xy), atan(p.y / p.x), 1.);\n  p = m1 * p;\n  p.x = abs(p.x);\n  p = m2 * p;\n  //p = vec3(p.x * cos(p.y), p.x * sin(p.y), 1.);\n\n\n  /*\n  float ratio = resolution.x / resolution.y;\n  float imageRatio = imageResolution.x / imageResolution.y;\n  if (ratio > imageRatio) {\n    p.x *= ratio / imageRatio;\n    p.x -= (ratio - imageRatio) / 2.;\n  } else {\n    p.y -= (imageRatio - ratio) / 2.;\n    p.y *= imageRatio / ratio;\n  }\n  */\n\n  if (p.x < 0. || p.x > 1. || p.y < 0. || p.y > 1.) {\n    // black if out of bounds\n    gl_FragColor = vec4(0., 0., 0., 1.);\n  } else {\n    gl_FragColor = texture2D(image, p.xy);\n  }\n}";
+  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D image;\nuniform vec2 resolution;\nuniform vec2 imageResolution;\n\nuniform mat3 m1;\nuniform mat3 m2;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  //p = vec3(length(p.xy), atan(p.y / p.x), 1.);\n  p = m1 * p;\n  p.x = fract(p.x);\n  p = m2 * p;\n  //p = vec3(p.x * cos(p.y), p.x * sin(p.y), 1.);\n\n\n  /*\n  float ratio = resolution.x / resolution.y;\n  float imageRatio = imageResolution.x / imageResolution.y;\n  if (ratio > imageRatio) {\n    p.x *= ratio / imageRatio;\n    p.x -= (ratio - imageRatio) / 2.;\n  } else {\n    p.y -= (imageRatio - ratio) / 2.;\n    p.y *= imageRatio / ratio;\n  }\n  */\n\n  if (p.x < 0. || p.x > 1. || p.y < 0. || p.y > 1.) {\n    // black if out of bounds\n    gl_FragColor = vec4(0., 0., 0., 1.);\n  } else {\n    gl_FragColor = texture2D(image, p.xy);\n  }\n}";
 
   canvas = $("#c")[0];
 
@@ -104,6 +104,57 @@
   draw();
 
   module.exports = draw;
+
+}).call(this);
+}, "generate": function(exports, require, module) {(function() {
+  var flattenMatrix, generate, state;
+
+  state = require("state");
+
+  generate = {};
+
+  generate.code = function() {
+    var c, code, f, i, _i, _j, _len, _len1, _ref, _ref1;
+    code = "";
+    code += "\nprecision mediump float;\n\nvarying vec2 position;\nuniform sampler2D image;\nuniform vec2 resolution;\nuniform vec2 imageResolution;\n";
+    _ref = state.chain;
+    for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+      c = _ref[i];
+      code += "uniform mat3 m" + i + ";\n";
+      code += "uniform mat3 m" + i + "inv;\n";
+    }
+    code += "\nvoid main() {\n  vec3 p = vec3(position, 1.);\n";
+    _ref1 = state.chain;
+    for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
+      c = _ref1[i];
+      f = c.distortion.f;
+      code += "\n";
+      code += "p = m" + i + " * p;\n";
+      code += "" + f + ";\n";
+      code += "p = m" + i + "inv * p;\n";
+      code += "\n";
+    }
+    code += "  if (p.x < 0. || p.x > 1. || p.y < 0. || p.y > 1.) {\n    // black if out of bounds\n    gl_FragColor = vec4(0., 0., 0., 1.);\n  } else {\n    gl_FragColor = texture2D(image, p.xy);\n  }\n}";
+    return code;
+  };
+
+  flattenMatrix = function(m) {
+    return _.flatten(numeric.transpose(m));
+  };
+
+  generate.uniforms = function() {
+    var c, i, uniforms, _i, _len, _ref;
+    uniforms = {};
+    _ref = state.chain;
+    for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+      c = _ref[i];
+      uniforms["m" + i] = flattenMatrix(c.transform);
+      uniforms["m" + i + "inv"] = flattenMatrix(numeric.inv(c.transform));
+    }
+    return uniforms;
+  };
+
+  module.exports = generate;
 
 }).call(this);
 }, "manipulate": function(exports, require, module) {(function() {
@@ -462,7 +513,8 @@ to set uniforms,
   model = {
     distortions: distortions,
     chain: [],
-    transform: numeric.identity(3)
+    transform: numeric.identity(3),
+    matrix: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
   };
 
   model.chain.push({
@@ -470,9 +522,7 @@ to set uniforms,
     distortion: distortions[0]
   });
 
-  module.exports = {
-    matrix: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-  };
+  module.exports = model;
 
 }).call(this);
 }});
