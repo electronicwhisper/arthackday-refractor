@@ -7,6 +7,9 @@ dist = (p1, p2) ->
   d = numeric['-'](p1, p2)
   numeric.dot(d, d)
 
+lerp = (x, min, max) ->
+  min + x * (max - min)
+
 eventPosition = (e) ->
   $el = $("#c")
   offset = $el.offset()
@@ -14,9 +17,14 @@ eventPosition = (e) ->
   height = $el.height()
 
   x = (e.pageX - offset.left) / width
-  y = 1 - (e.pageY - offset.top ) / height
+  y = (e.pageY - offset.top ) / height
+
+  x = lerp(x, -1, 1)
+  y = lerp(y, 1, -1)
 
   return [x, y, 1]
+
+
 
 
 solveTouch = (touches, matrix) ->
@@ -111,8 +119,8 @@ placeTouchHint = ->
   width = $el.width()
   height = $el.height()
 
-  x = lastPosition[0]       * width  + offset.left
-  y = (1 - lastPosition[1]) * height + offset.top
+  x = (lastPosition[0] + 1)/2       * width  + offset.left
+  y = (-lastPosition[1] + 1)/2      * height + offset.top
 
   $(".touch-hint").css({
     display: "block"

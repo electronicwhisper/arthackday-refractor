@@ -203,7 +203,7 @@
 
   generate = require("generate");
 
-  vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = (vertexPosition.xy + 1.0) * 0.5;\n}";
+  vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = vertexPosition.xy;\n}";
 
   fragmentSrc = generate.code();
 
@@ -291,7 +291,7 @@
 
 }).call(this);
 }, "manipulate": function(exports, require, module) {(function() {
-  var dist, eventPosition, getMatrix, lastLocal, lastPosition, placeTouchHint, setMatrix, solve, solveTouch, state;
+  var dist, eventPosition, getMatrix, lastLocal, lastPosition, lerp, placeTouchHint, setMatrix, solve, solveTouch, state;
 
   solve = require("solve");
 
@@ -303,6 +303,10 @@
     return numeric.dot(d, d);
   };
 
+  lerp = function(x, min, max) {
+    return min + x * (max - min);
+  };
+
   eventPosition = function(e) {
     var $el, height, offset, width, x, y;
     $el = $("#c");
@@ -310,7 +314,9 @@
     width = $el.width();
     height = $el.height();
     x = (e.pageX - offset.left) / width;
-    y = 1 - (e.pageY - offset.top) / height;
+    y = (e.pageY - offset.top) / height;
+    x = lerp(x, -1, 1);
+    y = lerp(y, 1, -1);
     return [x, y, 1];
   };
 
@@ -410,8 +416,8 @@
     offset = $el.offset();
     width = $el.width();
     height = $el.height();
-    x = lastPosition[0] * width + offset.left;
-    y = (1 - lastPosition[1]) * height + offset.top;
+    x = (lastPosition[0] + 1) / 2 * width + offset.left;
+    y = (-lastPosition[1] + 1) / 2 * height + offset.top;
     return $(".touch-hint").css({
       display: "block",
       left: x,

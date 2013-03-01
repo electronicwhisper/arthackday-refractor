@@ -1,8 +1,6 @@
 get it working with touch on a tablet
 
 build next version of internal representation
-  model it
-  generate fragment code using it
   build ui for it
 
 
