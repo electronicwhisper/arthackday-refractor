@@ -60,3 +60,12 @@ state.watch(->
     uniforms: generate.uniforms()
   })
 )
+
+state.watch(->
+  _.pluck(state.chain, "distortion")
+, ->
+  s.draw({
+    fragment: generate.code()
+    uniforms: generate.uniforms()
+  })
+)

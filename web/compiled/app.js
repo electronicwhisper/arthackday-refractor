@@ -188,7 +188,11 @@
 
 }).call(this);
 }, "app": function(exports, require, module) {(function() {
-  var canvas;
+  var canvas, state;
+
+  _.reverse = function(a) {
+    return a.slice().reverse();
+  };
 
   canvas = $("#c")[0];
 
@@ -199,6 +203,17 @@
   require("draw");
 
   require("touch");
+
+  state = require("state");
+
+  $("#add").on("click", function(e) {
+    return state.apply(function() {
+      return state.chain.push({
+        transform: numeric.identity(3),
+        distortion: _.shuffle(state.distortions)[0]
+      });
+    });
+  });
 
 }).call(this);
 }, "bounds": function(exports, require, module) {(function() {
@@ -272,6 +287,15 @@
     });
   });
 
+  state.watch(function() {
+    return _.pluck(state.chain, "distortion");
+  }, function() {
+    return s.draw({
+      fragment: generate.code(),
+      uniforms: generate.uniforms()
+    });
+  });
+
 }).call(this);
 }, "generate": function(exports, require, module) {(function() {
   var flattenMatrix, generate, state;
@@ -284,14 +308,14 @@
     var c, code, f, i, _i, _j, _len, _len1, _ref, _ref1;
     code = "";
     code += "\nprecision mediump float;\n\nvarying vec2 position;\nuniform sampler2D image;\nuniform vec2 resolution;\nuniform vec2 imageResolution;\n";
-    _ref = state.chain;
+    _ref = _.reverse(state.chain);
     for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
       c = _ref[i];
       code += "uniform mat3 m" + i + ";\n";
       code += "uniform mat3 m" + i + "inv;\n";
     }
     code += "\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  //p.xy = vec2(length(p.xy), atan(p.y, p.x));\n";
-    _ref1 = state.chain;
+    _ref1 = _.reverse(state.chain);
     for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
       c = _ref1[i];
       f = c.distortion.f;
@@ -301,7 +325,7 @@
       code += "p = m" + i + "inv * p;\n";
       code += "\n";
     }
-    code += "\n  //p.xy = vec2(p.x*cos(p.y), p.x*sin(p.y));\n\n  p.xy = (p.xy + 1.) * .5;\n  if (p.x < 0. || p.x > 1. || p.y < 0. || p.y > 1.) {\n    // black if out of bounds\n    gl_FragColor = vec4(0., 0., 0., 1.);\n  } else {\n    gl_FragColor = texture2D(image, p.xy);\n  }\n}";
+    code += "\n  //p.xy = vec2(p.x*cos(p.y), p.x*sin(p.y));\n\n  p.xy = (p.xy + 1.) * .5;\n\n  /*\n  if (p.x < 0. || p.x > 1. || p.y < 0. || p.y > 1.) {\n    // black if out of bounds\n    gl_FragColor = vec4(0., 0., 0., 1.);\n  } else {\n    gl_FragColor = texture2D(image, p.xy);\n  }\n  */\n\n  // mirror wrap it\n  p = abs(mod((p-1.), 2.)-1.);\n\n  gl_FragColor = texture2D(image, p.xy);\n}";
     return code;
   };
 
@@ -312,7 +336,7 @@
   generate.uniforms = function() {
     var c, i, uniforms, _i, _len, _ref;
     uniforms = {};
-    _ref = state.chain;
+    _ref = _.reverse(state.chain);
     for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
       c = _ref[i];
       uniforms["m" + i] = flattenMatrix(c.transform);
