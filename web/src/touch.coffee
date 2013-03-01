@@ -108,7 +108,8 @@ update = (touches) ->
   debug()
 
 
-h = Hammer($("#c")[0], {drag_max_touches:0})
+# h = Hammer($("#c")[0], {drag_max_touches:0})
+h = $("#c").hammer({drag_max_touches:0})
 
 h.on("drag touch", (e) ->
   touches = e.gesture.touches

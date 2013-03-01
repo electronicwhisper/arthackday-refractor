@@ -750,7 +750,7 @@ to set uniforms,
     return debug();
   };
 
-  h = Hammer($("#c")[0], {
+  h = $("#c").hammer({
     drag_max_touches: 0
   });
 
