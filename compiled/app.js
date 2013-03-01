@@ -194,6 +194,27 @@
   require("manipulate");
 
 }).call(this);
+}, "bounds": function(exports, require, module) {(function() {
+
+  module.exports = function() {
+    var $el, height, width;
+    $el = $("#c");
+    width = $el.width();
+    height = $el.height();
+    if (width < height) {
+      return {
+        boundsMin: [-1, -1 * height / width],
+        boundsMax: [1, 1 * height / width]
+      };
+    } else {
+      return {
+        boundsMin: [-1 * width / height, -1],
+        boundsMax: [1 * width / height, 1]
+      };
+    }
+  };
+
+}).call(this);
 }, "draw": function(exports, require, module) {(function() {
   var canvas, fragmentSrc, generate, s, shader, state, vertexSrc;
 
@@ -203,7 +224,7 @@
 
   generate = require("generate");
 
-  vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = vertexPosition.xy;\n}";
+  vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\nuniform vec2 boundsMin;\nuniform vec2 boundsMax;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = mix(boundsMin, boundsMax, (vertexPosition.xy + 1.0) * 0.5);\n}";
 
   fragmentSrc = generate.code();
 
@@ -218,6 +239,10 @@
     vertex: vertexSrc,
     fragment: generate.code(),
     uniforms: generate.uniforms()
+  });
+
+  s.set({
+    uniforms: require("bounds")()
   });
 
   $("#totoro").on("load", function(e) {
@@ -291,11 +316,13 @@
 
 }).call(this);
 }, "manipulate": function(exports, require, module) {(function() {
-  var dist, eventPosition, getMatrix, lastLocal, lastPosition, lerp, placeTouchHint, setMatrix, solve, solveTouch, state;
+  var bounds, dist, eventPosition, getMatrix, lastLocal, lastPosition, lerp, placeTouchHint, setMatrix, solve, solveTouch, state;
 
   solve = require("solve");
 
   state = require("state");
+
+  bounds = require("bounds");
 
   dist = function(p1, p2) {
     var d;
@@ -308,15 +335,16 @@
   };
 
   eventPosition = function(e) {
-    var $el, height, offset, width, x, y;
+    var $el, b, height, offset, width, x, y;
     $el = $("#c");
     offset = $el.offset();
     width = $el.width();
     height = $el.height();
     x = (e.pageX - offset.left) / width;
-    y = (e.pageY - offset.top) / height;
-    x = lerp(x, -1, 1);
-    y = lerp(y, 1, -1);
+    y = 1 - (e.pageY - offset.top) / height;
+    b = bounds();
+    x = lerp(x, b.boundsMin[0], b.boundsMax[0]);
+    y = lerp(y, b.boundsMin[1], b.boundsMax[1]);
     return [x, y, 1];
   };
 
@@ -411,13 +439,14 @@
   });
 
   placeTouchHint = function() {
-    var $el, height, offset, width, x, y;
+    var $el, b, height, offset, width, x, y;
     $el = $("#c");
     offset = $el.offset();
     width = $el.width();
     height = $el.height();
-    x = (lastPosition[0] + 1) / 2 * width + offset.left;
-    y = (-lastPosition[1] + 1) / 2 * height + offset.top;
+    b = bounds();
+    x = (lastPosition[0] - b.boundsMin[0]) / (b.boundsMax[0] - b.boundsMin[0]) * width + offset.left;
+    y = (1 - (lastPosition[1] - b.boundsMin[1]) / (b.boundsMax[1] - b.boundsMin[1])) * height + offset.top;
     return $(".touch-hint").css({
       display: "block",
       left: x,

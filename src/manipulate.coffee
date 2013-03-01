@@ -1,6 +1,7 @@
 
 solve = require("solve")
 state = require("state")
+bounds = require("bounds")
 
 
 dist = (p1, p2) ->
@@ -16,11 +17,13 @@ eventPosition = (e) ->
   width = $el.width()
   height = $el.height()
 
-  x = (e.pageX - offset.left) / width
-  y = (e.pageY - offset.top ) / height
+  # Scaled from 0 to 1
+  x =     (e.pageX - offset.left) / width
+  y = 1 - (e.pageY - offset.top ) / height
 
-  x = lerp(x, -1, 1)
-  y = lerp(y, 1, -1)
+  b = bounds()
+  x = lerp(x, b.boundsMin[0], b.boundsMax[0])
+  y = lerp(y, b.boundsMin[1], b.boundsMax[1])
 
   return [x, y, 1]
 
@@ -119,8 +122,10 @@ placeTouchHint = ->
   width = $el.width()
   height = $el.height()
 
-  x = (lastPosition[0] + 1)/2       * width  + offset.left
-  y = (-lastPosition[1] + 1)/2      * height + offset.top
+  b = bounds()
+
+  x = (lastPosition[0] - b.boundsMin[0]) / (b.boundsMax[0] - b.boundsMin[0]) * width  + offset.left
+  y = (1-(lastPosition[1] - b.boundsMin[1]) / (b.boundsMax[1] - b.boundsMin[1])) * height + offset.top
 
   $(".touch-hint").css({
     display: "block"

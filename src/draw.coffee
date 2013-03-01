@@ -8,10 +8,12 @@ precision mediump float;
 
 attribute vec3 vertexPosition;
 varying vec2 position;
+uniform vec2 boundsMin;
+uniform vec2 boundsMax;
 
 void main() {
   gl_Position = vec4(vertexPosition, 1.0);
-  position = vertexPosition.xy;
+  position = mix(boundsMin, boundsMax, (vertexPosition.xy + 1.0) * 0.5);
 }
 """
 
@@ -27,6 +29,8 @@ s = shader({
   fragment: generate.code()
   uniforms: generate.uniforms()
 })
+
+s.set({uniforms: require("bounds")()})
 
 $("#totoro").on("load", (e) ->
   s.draw({
