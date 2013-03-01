@@ -100,21 +100,20 @@ update = (touches) ->
   debug()
 
 
+h = Hammer($("#c")[0], {drag_max_touches:0})
 
+h.on("drag touch", (e) ->
+  touches = e.gesture.touches
+  update(touches)
 
+  e.gesture.preventDefault()
+)
+h.on("release", (e) ->
+  touches = e.gesture.touches
+  for touch in touches
+    delete tracking[touch.identifier]
+)
 
-document.addEventListener("touchstart", (e) ->
-  update(e.touches)
-, false)
-
-document.addEventListener("touchend", (e) ->
-  update(e.touches)
-, false)
-
-document.addEventListener("touchmove", (e) ->
-  update(e.touches)
-  e.preventDefault()
-, false)
 
 $("#debug").html(JSON.stringify(bounds()))
 

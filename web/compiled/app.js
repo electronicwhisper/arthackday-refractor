@@ -262,7 +262,7 @@
         imageResolution: [$("#totoro").width(), $("#totoro").height()]
       }
     });
-  }, 3000);
+  }, 500);
 
   state.watch(function() {
     return _.pluck(state.chain, "transform");
@@ -715,7 +715,7 @@ to set uniforms,
 
 }).call(this);
 }, "touch": function(exports, require, module) {(function() {
-  var bounds, debug, dist, eventPosition, getMatrix, lerp, setMatrix, solve, solveTouch, state, tracking, update;
+  var bounds, debug, dist, eventPosition, getMatrix, h, lerp, setMatrix, solve, solveTouch, state, tracking, update;
 
   solve = require("solve");
 
@@ -813,18 +813,27 @@ to set uniforms,
     return debug();
   };
 
-  document.addEventListener("touchstart", function(e) {
-    return update(e.touches);
-  }, false);
+  h = Hammer($("#c")[0], {
+    drag_max_touches: 0
+  });
 
-  document.addEventListener("touchend", function(e) {
-    return update(e.touches);
-  }, false);
+  h.on("drag touch", function(e) {
+    var touches;
+    touches = e.gesture.touches;
+    update(touches);
+    return e.gesture.preventDefault();
+  });
 
-  document.addEventListener("touchmove", function(e) {
-    update(e.touches);
-    return e.preventDefault();
-  }, false);
+  h.on("release", function(e) {
+    var touch, touches, _i, _len, _results;
+    touches = e.gesture.touches;
+    _results = [];
+    for (_i = 0, _len = touches.length; _i < _len; _i++) {
+      touch = touches[_i];
+      _results.push(delete tracking[touch.identifier]);
+    }
+    return _results;
+  });
 
   $("#debug").html(JSON.stringify(bounds()));
 

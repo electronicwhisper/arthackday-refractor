@@ -50,8 +50,7 @@ setTimeout(->
       imageResolution: [$("#totoro").width(), $("#totoro").height()]
     }
   })
-, 3000)
-
+, 500)
 
 
 state.watch(->
