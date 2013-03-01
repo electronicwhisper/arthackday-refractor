@@ -291,13 +291,11 @@
 
 }).call(this);
 }, "manipulate": function(exports, require, module) {(function() {
-  var dist, draw, eventPosition, lastLocal, lastPosition, placeTouchHint, solve, solveTouch, state;
+  var dist, eventPosition, getMatrix, lastLocal, lastPosition, placeTouchHint, setMatrix, solve, solveTouch, state;
 
   solve = require("solve");
 
   state = require("state");
-
-  draw = require("draw");
 
   dist = function(p1, p2) {
     var d;
@@ -345,13 +343,21 @@
     return numeric.dot(transform, matrix);
   };
 
+  getMatrix = function() {
+    return state.chain[0].transform;
+  };
+
+  setMatrix = function(m) {
+    return state.chain[0].transform = m;
+  };
+
   lastPosition = false;
 
   lastLocal = false;
 
   $("#c").on("mousedown", function(e) {
     var downLocal, downPosition, matrix, move, up;
-    matrix = state.chain[0].transform;
+    matrix = getMatrix();
     downPosition = eventPosition(e);
     downLocal = numeric.dot(matrix, downPosition);
     if (!key.shift) {
@@ -382,7 +388,7 @@
       }
       return state.apply(function() {
         matrix = newMatrix;
-        return state.chain[0].transform = newMatrix;
+        return setMatrix(newMatrix);
       });
     };
     up = function(e) {

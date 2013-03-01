@@ -1,7 +1,6 @@
 
 solve = require("solve")
 state = require("state")
-draw = require("draw")
 
 
 dist = (p1, p2) ->
@@ -53,11 +52,18 @@ solveTouch = (touches, matrix) ->
 
 
 
+getMatrix = ->
+  state.chain[0].transform
+
+setMatrix = (m) ->
+  state.chain[0].transform = m
+
+
 lastPosition = false
 lastLocal = false
 
 $("#c").on("mousedown", (e) ->
-  matrix = state.chain[0].transform
+  matrix = getMatrix()
 
   downPosition = eventPosition(e)
   downLocal = numeric.dot(matrix, downPosition)
@@ -79,8 +85,7 @@ $("#c").on("mousedown", (e) ->
 
     state.apply ->
       matrix = newMatrix
-      state.chain[0].transform = newMatrix
-    # draw()
+      setMatrix(newMatrix)
 
   up = (e) ->
     lastPosition = eventPosition(e)

@@ -46,11 +46,3 @@ state.watch(->
     uniforms: generate.uniforms()
   })
 )
-
-
-# state.watch()
-
-
-# s.draw({
-#   uniforms: generate.uniforms()
-# })
