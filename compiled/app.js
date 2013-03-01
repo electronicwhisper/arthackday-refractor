@@ -189,9 +189,7 @@
 }).call(this);
 }, "app": function(exports, require, module) {(function() {
 
-  require("draw");
-
-  require("manipulate");
+  require("touch");
 
 }).call(this);
 }, "bounds": function(exports, require, module) {(function() {
@@ -216,13 +214,15 @@
 
 }).call(this);
 }, "draw": function(exports, require, module) {(function() {
-  var canvas, fragmentSrc, generate, s, shader, state, vertexSrc;
+  var bounds, canvas, fragmentSrc, generate, s, shader, state, vertexSrc;
 
   shader = require("shader");
 
   state = require("state");
 
   generate = require("generate");
+
+  bounds = require("bounds");
 
   vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\nuniform vec2 boundsMin;\nuniform vec2 boundsMax;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = mix(boundsMin, boundsMax, (vertexPosition.xy + 1.0) * 0.5);\n}";
 
@@ -245,7 +245,7 @@
     uniforms: require("bounds")()
   });
 
-  $("#totoro").on("load", function(e) {
+  setTimeout(function() {
     return s.draw({
       uniforms: {
         image: $("#totoro")[0],
@@ -253,7 +253,7 @@
         imageResolution: [$("#totoro").width(), $("#totoro").height()]
       }
     });
-  });
+  }, 3000);
 
   state.watch(function() {
     return _.pluck(state.chain, "transform");
@@ -281,7 +281,7 @@
       code += "uniform mat3 m" + i + ";\n";
       code += "uniform mat3 m" + i + "inv;\n";
     }
-    code += "\nvoid main() {\n  vec3 p = vec3(position, 1.);\n";
+    code += "\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  //p.xy = vec2(length(p.xy), atan(p.y, p.x));\n";
     _ref1 = state.chain;
     for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
       c = _ref1[i];
@@ -292,7 +292,7 @@
       code += "p = m" + i + "inv * p;\n";
       code += "\n";
     }
-    code += "  if (p.x < 0. || p.x > 1. || p.y < 0. || p.y > 1.) {\n    // black if out of bounds\n    gl_FragColor = vec4(0., 0., 0., 1.);\n  } else {\n    gl_FragColor = texture2D(image, p.xy);\n  }\n}";
+    code += "\n  //p.xy = vec2(p.x*cos(p.y), p.x*sin(p.y));\n\n  p.xy = (p.xy + 1.) * .5;\n  if (p.x < 0. || p.x > 1. || p.y < 0. || p.y > 1.) {\n    // black if out of bounds\n    gl_FragColor = vec4(0., 0., 0., 1.);\n  } else {\n    gl_FragColor = texture2D(image, p.xy);\n  }\n}";
     return code;
   };
 
@@ -703,6 +703,55 @@ to set uniforms,
   });
 
   module.exports = model;
+
+}).call(this);
+}, "touch": function(exports, require, module) {(function() {
+  var canvas, debug, touches;
+
+  canvas = $("#c")[0];
+
+  debug = function() {
+    return $("#debug").html(JSON.stringify(touches));
+  };
+
+  touches = {};
+
+  document.addEventListener("touchstart", function(e) {
+    var t, touch, _i, _len, _ref;
+    _ref = e.changedTouches;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      touch = _ref[_i];
+      t = touches[touch.identifier] = {};
+      t.x = touch.pageX;
+      t.y = touch.pageY;
+    }
+    return debug();
+  }, false);
+
+  document.addEventListener("touchend", function(e) {
+    var touch, _i, _len, _ref;
+    _ref = e.changedTouches;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      touch = _ref[_i];
+      delete touches[touch.identifier];
+    }
+    return debug();
+  }, false);
+
+  document.addEventListener("touchmove", function(e) {
+    var t, touch, _i, _len, _ref;
+    _ref = e.changedTouches;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      touch = _ref[_i];
+      t = touches[touch.identifier];
+      t.x = touch.pageX;
+      t.y = touch.pageY;
+    }
+    debug();
+    return e.preventDefault();
+  }, false);
+
+  $("#debug").html("init!");
 
 }).call(this);
 }});

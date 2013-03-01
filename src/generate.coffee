@@ -25,6 +25,8 @@ generate.code = ->
     void main() {
       vec3 p = vec3(position, 1.);
 
+      //p.xy = vec2(length(p.xy), atan(p.y, p.x));
+
     """
 
   for c, i in state.chain
@@ -36,6 +38,10 @@ generate.code = ->
     code += "\n"
 
   code += """
+
+      //p.xy = vec2(p.x*cos(p.y), p.x*sin(p.y));
+
+      p.xy = (p.xy + 1.) * .5;
       if (p.x < 0. || p.x > 1. || p.y < 0. || p.y > 1.) {
         // black if out of bounds
         gl_FragColor = vec4(0., 0., 0., 1.);

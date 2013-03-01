@@ -1,6 +1,7 @@
 shader = require("shader")
 state = require("state")
 generate = require("generate")
+bounds = require("bounds")
 
 
 vertexSrc = """
@@ -32,7 +33,16 @@ s = shader({
 
 s.set({uniforms: require("bounds")()})
 
-$("#totoro").on("load", (e) ->
+# $("#totoro").on("load", (e) ->
+#   s.draw({
+#     uniforms: {
+#       image: $("#totoro")[0]
+#       resolution: [canvas.width, canvas.height]
+#       imageResolution: [$("#totoro").width(), $("#totoro").height()]
+#     }
+#   })
+# )
+setTimeout(->
   s.draw({
     uniforms: {
       image: $("#totoro")[0]
@@ -40,7 +50,8 @@ $("#totoro").on("load", (e) ->
       imageResolution: [$("#totoro").width(), $("#totoro").height()]
     }
   })
-)
+, 3000)
+
 
 
 state.watch(->
