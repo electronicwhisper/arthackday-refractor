@@ -65,16 +65,18 @@ solveTouch = (touches, matrix) ->
 
 getMatrix = ->
   if state.selected
-    state.selected.transform
+    # state.selected.transform
+    numeric.dot(state.selected.transform, state.globalTransform)
   else
-    state.transform
+    state.globalTransform
   # _.last(state.chain).transform
 
 setMatrix = (m) ->
   if state.selected
-    state.selected.transform = m
+    # state.selected.transform = m
+    state.selected.transform = numeric.dot(m, numeric.inv(state.globalTransform))
   else
-    state.transform = m
+    state.globalTransform = m
   # _.last(state.chain).transform = m
 
 

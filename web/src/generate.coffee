@@ -14,6 +14,8 @@ generate.code = ->
     uniform vec2 resolution;
     uniform vec2 imageResolution;
 
+    uniform mat3 globalTransform;
+
     """
 
   for c, i in _.reverse(state.chain)
@@ -28,6 +30,10 @@ generate.code = ->
       //p.xy = vec2(length(p.xy), atan(p.y, p.x));
 
     """
+
+  code += "\n"
+  code += "p = globalTransform * p;"
+  code += "\n"
 
   for c, i in _.reverse(state.chain)
     f = c.distortion.f
@@ -66,7 +72,9 @@ flattenMatrix = (m) ->
   _.flatten(numeric.transpose(m))
 
 generate.uniforms = ->
-  uniforms = {}
+  uniforms = {
+    globalTransform: flattenMatrix(state.globalTransform)
+  }
   for c, i in _.reverse(state.chain)
     uniforms["m#{i}"]    = flattenMatrix(c.transform)
     uniforms["m#{i}inv"] = flattenMatrix(numeric.inv(c.transform))

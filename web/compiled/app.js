@@ -212,7 +212,7 @@
     state.apply(function() {
       var c;
       c = {
-        transform: numeric.identity(3),
+        transform: numeric.inv(state.globalTransform),
         distortion: _.shuffle(state.distortions)[0]
       };
       state.chain.push(c);
@@ -325,7 +325,7 @@
     });
   }, 500);
 
-  state.watch(function() {
+  state.watch("globalTransform", function() {
     return _.pluck(state.chain, "transform");
   }, function() {
     return s.draw({
@@ -353,7 +353,7 @@
   generate.code = function() {
     var c, code, f, i, _i, _j, _len, _len1, _ref, _ref1;
     code = "";
-    code += "\nprecision highp float;\n\nvarying vec2 position;\nuniform sampler2D image;\nuniform vec2 resolution;\nuniform vec2 imageResolution;\n";
+    code += "\nprecision highp float;\n\nvarying vec2 position;\nuniform sampler2D image;\nuniform vec2 resolution;\nuniform vec2 imageResolution;\n\nuniform mat3 globalTransform;\n";
     _ref = _.reverse(state.chain);
     for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
       c = _ref[i];
@@ -361,6 +361,9 @@
       code += "uniform mat3 m" + i + "inv;\n";
     }
     code += "\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  //p.xy = vec2(length(p.xy), atan(p.y, p.x));\n";
+    code += "\n";
+    code += "p = globalTransform * p;";
+    code += "\n";
     _ref1 = _.reverse(state.chain);
     for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
       c = _ref1[i];
@@ -381,7 +384,9 @@
 
   generate.uniforms = function() {
     var c, i, uniforms, _i, _len, _ref;
-    uniforms = {};
+    uniforms = {
+      globalTransform: flattenMatrix(state.globalTransform)
+    };
     _ref = _.reverse(state.chain);
     for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
       c = _ref[i];
@@ -633,7 +638,7 @@ to set uniforms,
     distortions: distortions,
     chain: [],
     selected: false,
-    transform: numeric.identity(3)
+    globalTransform: numeric.identity(3)
   });
 
   state.watch("selected", "chain", function() {
@@ -641,6 +646,8 @@ to set uniforms,
       return state.selected = false;
     }
   });
+
+  window.state = state;
 
   module.exports = state;
 
@@ -709,17 +716,17 @@ to set uniforms,
 
   getMatrix = function() {
     if (state.selected) {
-      return state.selected.transform;
+      return numeric.dot(state.selected.transform, state.globalTransform);
     } else {
-      return state.transform;
+      return state.globalTransform;
     }
   };
 
   setMatrix = function(m) {
     if (state.selected) {
-      return state.selected.transform = m;
+      return state.selected.transform = numeric.dot(m, numeric.inv(state.globalTransform));
     } else {
-      return state.transform = m;
+      return state.globalTransform = m;
     }
   };
 

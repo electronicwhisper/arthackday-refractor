@@ -28,7 +28,7 @@ state = new ReactiveScope({
   distortions: distortions
   chain: []
   selected: false
-  transform: numeric.identity(3)
+  globalTransform: numeric.identity(3)
 })
 
 state.watch("selected", "chain", ->
@@ -36,6 +36,7 @@ state.watch("selected", "chain", ->
     state.selected = false
 )
 
+window.state = state
 
 
 module.exports = state

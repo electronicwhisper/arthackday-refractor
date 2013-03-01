@@ -17,7 +17,8 @@ h = $("#sidebar").hammer()
 h.on("tap", ".button-add", (e) ->
   state.apply ->
     c = {
-      transform: numeric.identity(3)
+      # transform: numeric.identity(3)
+      transform: numeric.inv(state.globalTransform)
       distortion: _.shuffle(state.distortions)[0]
     }
     state.chain.push(c)

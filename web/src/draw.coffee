@@ -53,7 +53,7 @@ setTimeout(->
 , 500)
 
 
-state.watch(->
+state.watch("globalTransform", ->
   _.pluck(state.chain, "transform")
 , ->
   s.draw({
