@@ -11,19 +11,17 @@ body {
   position: absolute;
   top: 0px;
   left: 0px;
-  right: 0px;
+  right: 256px;
   bottom: 0px;
 }
-.touch-hint {
+#sidebar {
   position: absolute;
-  width: 12px;
-  height: 12px;
-  margin-left: -6px;
-  margin-top: -6px;
-  border-radius: 6px;
-  background-color: rgba(0,0,0,0.5);
+  right: 0px;
+  width: 256px;
   top: 0px;
-  left: 0px;
+  bottom: 0px;
+  background-color: #333;
+  color: #999;
 }
 </style>
 </head>
@@ -35,7 +33,9 @@ body {
   <canvas id="c"></canvas>
 </div>
 
-<div class="touch-hint"></div>
+<div id="sidebar">
+  <button id="add">+</button>
+</div>
 
 <div id="debug" style="position: absolute; top: 40px; left: 40px; color: #f00"></div>
 

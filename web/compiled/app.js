@@ -324,146 +324,6 @@
   module.exports = generate;
 
 }).call(this);
-}, "manipulate": function(exports, require, module) {(function() {
-  var bounds, dist, eventPosition, getMatrix, lastLocal, lastPosition, lerp, placeTouchHint, setMatrix, solve, solveTouch, state;
-
-  solve = require("solve");
-
-  state = require("state");
-
-  bounds = require("bounds");
-
-  dist = function(p1, p2) {
-    var d;
-    d = numeric['-'](p1, p2);
-    return numeric.dot(d, d);
-  };
-
-  lerp = function(x, min, max) {
-    return min + x * (max - min);
-  };
-
-  eventPosition = function(e) {
-    var $el, b, height, offset, width, x, y;
-    $el = $("#c");
-    offset = $el.offset();
-    width = $el.width();
-    height = $el.height();
-    x = (e.pageX - offset.left) / width;
-    y = 1 - (e.pageY - offset.top) / height;
-    b = bounds();
-    x = lerp(x, b.boundsMin[0], b.boundsMax[0]);
-    y = lerp(y, b.boundsMin[1], b.boundsMax[1]);
-    return [x, y, 1];
-  };
-
-  solveTouch = function(touches, matrix) {
-    var objective, transform;
-    objective = function(m) {
-      var currentLocal, error, newMatrix, touch, _i, _len;
-      newMatrix = numeric.dot(m, matrix);
-      error = 0;
-      for (_i = 0, _len = touches.length; _i < _len; _i++) {
-        touch = touches[_i];
-        currentLocal = numeric.dot(newMatrix, touch.current);
-        error += dist(touch.original, currentLocal);
-      }
-      return error;
-    };
-    if (touches.length === 1) {
-      transform = solve(objective, function(_arg) {
-        var x, y;
-        x = _arg[0], y = _arg[1];
-        return [[1, 0, x], [0, 1, y], [0, 0, 1]];
-      }, [0, 0]);
-    } else if (touches.length === 2) {
-      transform = solve(objective, function(_arg) {
-        var r, s, x, y;
-        s = _arg[0], r = _arg[1], x = _arg[2], y = _arg[3];
-        return [[s, r, x], [-r, s, y], [0, 0, 1]];
-      }, [1, 0, 0, 0]);
-    }
-    return numeric.dot(transform, matrix);
-  };
-
-  getMatrix = function() {
-    return state.chain[0].transform;
-  };
-
-  setMatrix = function(m) {
-    return state.chain[0].transform = m;
-  };
-
-  lastPosition = false;
-
-  lastLocal = false;
-
-  $("#c").on("mousedown", function(e) {
-    var downLocal, downPosition, matrix, move, up;
-    matrix = getMatrix();
-    downPosition = eventPosition(e);
-    downLocal = numeric.dot(matrix, downPosition);
-    if (!key.shift) {
-      $(".touch-hint").css({
-        display: "none"
-      });
-    }
-    move = function(e) {
-      var movePosition, newMatrix;
-      movePosition = eventPosition(e);
-      if (key.shift) {
-        newMatrix = solveTouch([
-          {
-            original: downLocal,
-            current: movePosition
-          }, {
-            original: lastLocal,
-            current: lastPosition
-          }
-        ], matrix);
-      } else {
-        newMatrix = solveTouch([
-          {
-            original: downLocal,
-            current: movePosition
-          }
-        ], matrix);
-      }
-      return state.apply(function() {
-        matrix = newMatrix;
-        return setMatrix(newMatrix);
-      });
-    };
-    up = function(e) {
-      lastPosition = eventPosition(e);
-      lastLocal = numeric.dot(matrix, lastPosition);
-      placeTouchHint();
-      $(document).off("mousemove", move);
-      return $(document).off("mouseup", up);
-    };
-    $(document).on("mousemove", move);
-    $(document).on("mouseup", up);
-    e.preventDefault();
-    return true;
-  });
-
-  placeTouchHint = function() {
-    var $el, b, height, offset, width, x, y;
-    $el = $("#c");
-    offset = $el.offset();
-    width = $el.width();
-    height = $el.height();
-    b = bounds();
-    x = (lastPosition[0] - b.boundsMin[0]) / (b.boundsMax[0] - b.boundsMin[0]) * width + offset.left;
-    y = (1 - (lastPosition[1] - b.boundsMin[1]) / (b.boundsMax[1] - b.boundsMin[1])) * height + offset.top;
-    return $(".touch-hint").css({
-      display: "block",
-      left: x,
-      top: y
-    });
-  };
-
-}).call(this);
 }, "shader": function(exports, require, module) {
 /*
 opts
@@ -777,11 +637,11 @@ to set uniforms,
   };
 
   getMatrix = function() {
-    return state.chain[0].transform;
+    return _.last(state.chain).transform;
   };
 
   setMatrix = function(m) {
-    return state.chain[0].transform = m;
+    return _.last(state.chain).transform = m;
   };
 
   tracking = {};

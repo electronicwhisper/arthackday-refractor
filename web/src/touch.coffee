@@ -64,10 +64,10 @@ solveTouch = (touches, matrix) ->
 
 
 getMatrix = ->
-  state.chain[0].transform
+  _.last(state.chain).transform
 
 setMatrix = (m) ->
-  state.chain[0].transform = m
+  _.last(state.chain).transform = m
 
 
 
