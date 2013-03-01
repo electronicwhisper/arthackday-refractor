@@ -20,12 +20,12 @@ eventPosition = (e) ->
   return [x, y, 1]
 
 
-solveTouch = (touches) ->
+solveTouch = (touches, matrix) ->
   # touches is an array of {original: [x, y, 1], current: [x, y, 1]}
-  # original should be in _local_ coordinates
+  # original should be in _local_ coordinates (i.e. original matrix already applied)
   # current should be in _event_ coordinates
   objective = (m) ->
-    newMatrix = numeric.dot(m, state.matrix)
+    newMatrix = numeric.dot(m, matrix)
     error = 0
     for touch in touches
       currentLocal = numeric.dot(newMatrix, touch.current)
@@ -49,7 +49,7 @@ solveTouch = (touches) ->
       , [1, 0, 0, 0]
     )
 
-  state.matrix = numeric.dot(transform, state.matrix)
+  return numeric.dot(transform, matrix)
 
 
 
@@ -57,8 +57,10 @@ lastPosition = false
 lastLocal = false
 
 $("#c").on("mousedown", (e) ->
+  matrix = state.chain[0].transform
+
   downPosition = eventPosition(e)
-  downLocal = numeric.dot(state.matrix, downPosition)
+  downLocal = numeric.dot(matrix, downPosition)
   if !key.shift
     $(".touch-hint").css({display: "none"})
 
@@ -66,20 +68,23 @@ $("#c").on("mousedown", (e) ->
     movePosition = eventPosition(e)
 
     if key.shift
-      solveTouch([
+      newMatrix = solveTouch([
         {original: downLocal, current: movePosition}
         {original: lastLocal, current: lastPosition}
-      ])
+      ], matrix)
     else
-      solveTouch([
+      newMatrix = solveTouch([
         {original: downLocal, current: movePosition}
-      ])
+      ], matrix)
 
-    draw()
+    state.apply ->
+      matrix = newMatrix
+      state.chain[0].transform = newMatrix
+    # draw()
 
   up = (e) ->
     lastPosition = eventPosition(e)
-    lastLocal = numeric.dot(state.matrix, lastPosition)
+    lastLocal = numeric.dot(matrix, lastPosition)
     placeTouchHint()
 
     $(document).off("mousemove", move)

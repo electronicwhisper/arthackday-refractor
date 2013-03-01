@@ -1,3 +1,5 @@
+ReactiveScope = require("ReactiveScope")
+
 distortions = [
   {
     title: "Reflect"
@@ -22,7 +24,7 @@ distortions = [
 ]
 
 
-model = {
+model = new ReactiveScope({
   distortions: distortions
   chain: []
   transform: numeric.identity(3)
@@ -31,7 +33,7 @@ model = {
   matrix: [[1, 0, 0],
           [0, 1, 0],
           [0, 0, 1]]
-}
+})
 
 model.chain.push({
   transform: numeric.identity(3)

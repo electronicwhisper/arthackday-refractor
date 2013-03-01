@@ -48,21 +48,164 @@
     };
   }
   return this.require.define;
-}).call(this)({"app": function(exports, require, module) {(function() {
+}).call(this)({"ReactiveScope": function(exports, require, module) {(function() {
+  var ReactiveScope, Watcher, deepClone, isPlainObject,
+    __hasProp = {}.hasOwnProperty,
+    __slice = [].slice;
+
+  isPlainObject = function(o) {
+    return o.constructor === Object;
+  };
+
+  deepClone = function(o) {
+    var k, result, v;
+    if (_.isArray(o)) {
+      return _.map(o, deepClone);
+    } else if (isPlainObject(o)) {
+      result = {};
+      for (k in o) {
+        if (!__hasProp.call(o, k)) continue;
+        v = o[k];
+        result[k] = deepClone(v);
+      }
+      return result;
+    } else {
+      return o;
+    }
+  };
+
+  Watcher = (function() {
+
+    function Watcher(watchFn, callback) {
+      this.watchFn = watchFn;
+      this.callback = callback;
+      this._oldValue = void 0;
+      this.update();
+    }
+
+    Watcher.prototype.update = function() {
+      var newValue, updated;
+      newValue = this.watchFn();
+      updated = !_.isEqual(this._oldValue, newValue);
+      this._oldValue = newValue;
+      return updated;
+    };
+
+    return Watcher;
+
+  })();
+
+  ReactiveScope = (function() {
+
+    function ReactiveScope(initial) {
+      var k, v;
+      this._watchers = [];
+      for (k in initial) {
+        if (!__hasProp.call(initial, k)) continue;
+        v = initial[k];
+        this[k] = v;
+      }
+    }
+
+    ReactiveScope.prototype.watch = function() {
+      var args, callback, remover, watchExprs, watchFn, watcher;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      callback = _.last(args);
+      watchExprs = _.initial(args);
+      watchFn = _.bind(function() {
+        var result, watchExpr;
+        result = (function() {
+          var _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = watchExprs.length; _i < _len; _i++) {
+            watchExpr = watchExprs[_i];
+            if (_.isString(watchExpr)) {
+              _results.push(this[watchExpr]);
+            } else if (_.isFunction(watchExpr)) {
+              _results.push(watchExpr());
+            } else {
+              _results.push(void 0);
+            }
+          }
+          return _results;
+        }).call(this);
+        return deepClone(result);
+      }, this);
+      watcher = new Watcher(watchFn, callback);
+      this._watchers.push(watcher);
+      remover = _.bind(function() {
+        return this._watchers = _.without(this._watchers, watcher);
+      }, this);
+      return remover;
+    };
+
+    ReactiveScope.prototype.apply = function(fn) {
+      var result;
+      result = fn();
+      this.digest();
+      return result;
+    };
+
+    ReactiveScope.prototype.digest = function() {
+      var callback, callbacks, digestCycles, dirty, updated, watcher, _i, _len, _ref, _results;
+      dirty = true;
+      digestCycles = 0;
+      _results = [];
+      while (dirty) {
+        digestCycles++;
+        if (digestCycles > 10) {
+          throw "Maximum digest cycles (10) exceeded.";
+        }
+        dirty = false;
+        callbacks = [];
+        _ref = this._watchers;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          watcher = _ref[_i];
+          updated = watcher.update();
+          if (updated) {
+            callbacks.push(watcher.callback);
+            dirty = true;
+          }
+        }
+        _results.push((function() {
+          var _j, _len1, _results1;
+          _results1 = [];
+          for (_j = 0, _len1 = callbacks.length; _j < _len1; _j++) {
+            callback = callbacks[_j];
+            _results1.push(callback());
+          }
+          return _results1;
+        })());
+      }
+      return _results;
+    };
+
+    return ReactiveScope;
+
+  })();
+
+  module.exports = ReactiveScope;
+
+}).call(this);
+}, "app": function(exports, require, module) {(function() {
+
+  require("draw");
 
   require("manipulate");
 
 }).call(this);
 }, "draw": function(exports, require, module) {(function() {
-  var canvas, draw, flattenMatrix, fragmentSrc, s, shader, state, vertexSrc;
+  var canvas, fragmentSrc, generate, s, shader, state, vertexSrc;
 
   shader = require("shader");
 
   state = require("state");
 
+  generate = require("generate");
+
   vertexSrc = "precision mediump float;\n\nattribute vec3 vertexPosition;\nvarying vec2 position;\n\nvoid main() {\n  gl_Position = vec4(vertexPosition, 1.0);\n  position = (vertexPosition.xy + 1.0) * 0.5;\n}";
 
-  fragmentSrc = "precision mediump float;\n\nvarying vec2 position;\nuniform sampler2D image;\nuniform vec2 resolution;\nuniform vec2 imageResolution;\n\nuniform mat3 m1;\nuniform mat3 m2;\n\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  //p = vec3(length(p.xy), atan(p.y / p.x), 1.);\n  p = m1 * p;\n  p.x = fract(p.x);\n  p = m2 * p;\n  //p = vec3(p.x * cos(p.y), p.x * sin(p.y), 1.);\n\n\n  /*\n  float ratio = resolution.x / resolution.y;\n  float imageRatio = imageResolution.x / imageResolution.y;\n  if (ratio > imageRatio) {\n    p.x *= ratio / imageRatio;\n    p.x -= (ratio - imageRatio) / 2.;\n  } else {\n    p.y -= (imageRatio - ratio) / 2.;\n    p.y *= imageRatio / ratio;\n  }\n  */\n\n  if (p.x < 0. || p.x > 1. || p.y < 0. || p.y > 1.) {\n    // black if out of bounds\n    gl_FragColor = vec4(0., 0., 0., 1.);\n  } else {\n    gl_FragColor = texture2D(image, p.xy);\n  }\n}";
+  fragmentSrc = generate.code();
 
   canvas = $("#c")[0];
 
@@ -73,7 +216,8 @@
   s = shader({
     canvas: canvas,
     vertex: vertexSrc,
-    fragment: fragmentSrc
+    fragment: generate.code(),
+    uniforms: generate.uniforms()
   });
 
   $("#totoro").on("load", function(e) {
@@ -86,24 +230,13 @@
     });
   });
 
-  flattenMatrix = function(m) {
-    return _.flatten(numeric.transpose(m));
-  };
-
-  draw = function() {
-    var matrix;
-    matrix = state.matrix;
+  state.watch(function() {
+    return _.pluck(state.chain, "transform");
+  }, function() {
     return s.draw({
-      uniforms: {
-        m1: flattenMatrix(matrix),
-        m2: flattenMatrix(numeric.inv(matrix))
-      }
+      uniforms: generate.uniforms()
     });
-  };
-
-  draw();
-
-  module.exports = draw;
+  });
 
 }).call(this);
 }, "generate": function(exports, require, module) {(function() {
@@ -183,11 +316,11 @@
     return [x, y, 1];
   };
 
-  solveTouch = function(touches) {
+  solveTouch = function(touches, matrix) {
     var objective, transform;
     objective = function(m) {
       var currentLocal, error, newMatrix, touch, _i, _len;
-      newMatrix = numeric.dot(m, state.matrix);
+      newMatrix = numeric.dot(m, matrix);
       error = 0;
       for (_i = 0, _len = touches.length; _i < _len; _i++) {
         touch = touches[_i];
@@ -209,7 +342,7 @@
         return [[s, r, x], [-r, s, y], [0, 0, 1]];
       }, [1, 0, 0, 0]);
     }
-    return state.matrix = numeric.dot(transform, state.matrix);
+    return numeric.dot(transform, matrix);
   };
 
   lastPosition = false;
@@ -217,19 +350,20 @@
   lastLocal = false;
 
   $("#c").on("mousedown", function(e) {
-    var downLocal, downPosition, move, up;
+    var downLocal, downPosition, matrix, move, up;
+    matrix = state.chain[0].transform;
     downPosition = eventPosition(e);
-    downLocal = numeric.dot(state.matrix, downPosition);
+    downLocal = numeric.dot(matrix, downPosition);
     if (!key.shift) {
       $(".touch-hint").css({
         display: "none"
       });
     }
     move = function(e) {
-      var movePosition;
+      var movePosition, newMatrix;
       movePosition = eventPosition(e);
       if (key.shift) {
-        solveTouch([
+        newMatrix = solveTouch([
           {
             original: downLocal,
             current: movePosition
@@ -237,20 +371,23 @@
             original: lastLocal,
             current: lastPosition
           }
-        ]);
+        ], matrix);
       } else {
-        solveTouch([
+        newMatrix = solveTouch([
           {
             original: downLocal,
             current: movePosition
           }
-        ]);
+        ], matrix);
       }
-      return draw();
+      return state.apply(function() {
+        matrix = newMatrix;
+        return state.chain[0].transform = newMatrix;
+      });
     };
     up = function(e) {
       lastPosition = eventPosition(e);
-      lastLocal = numeric.dot(state.matrix, lastPosition);
+      lastLocal = numeric.dot(matrix, lastPosition);
       placeTouchHint();
       $(document).off("mousemove", move);
       return $(document).off("mouseup", up);
@@ -489,7 +626,9 @@ to set uniforms,
 
 }).call(this);
 }, "state": function(exports, require, module) {(function() {
-  var distortions, model;
+  var ReactiveScope, distortions, model;
+
+  ReactiveScope = require("ReactiveScope");
 
   distortions = [
     {
@@ -510,12 +649,12 @@ to set uniforms,
     }
   ];
 
-  model = {
+  model = new ReactiveScope({
     distortions: distortions,
     chain: [],
     transform: numeric.identity(3),
     matrix: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-  };
+  });
 
   model.chain.push({
     transform: numeric.identity(3),
