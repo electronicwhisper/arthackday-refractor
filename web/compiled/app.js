@@ -188,7 +188,7 @@
 
 }).call(this);
 }, "app": function(exports, require, module) {(function() {
-  var canvas, koState, koUpdate, state;
+  var canvas, h, koState, koUpdate, state;
 
   _.reverse = function(a) {
     return a.slice().reverse();
@@ -206,7 +206,9 @@
 
   state = require("state");
 
-  $(document).on("click", ".button-add", function(e) {
+  h = $("#sidebar").hammer();
+
+  h.on("tap", ".button-add", function(e) {
     state.apply(function() {
       var c;
       c = {
@@ -219,7 +221,7 @@
     return false;
   });
 
-  $(document).on("click", ".button-remove", function(e) {
+  h.on("tap", ".button-remove", function(e) {
     var c;
     c = ko.dataFor(this);
     state.apply(function() {
@@ -228,7 +230,7 @@
     return false;
   });
 
-  $(document).on("click", ".distortion", function(e) {
+  h.on("tap", ".distortion", function(e) {
     var c;
     c = ko.dataFor(this);
     state.apply(function() {
@@ -237,7 +239,7 @@
     return false;
   });
 
-  $(document).on("click", "#sidebar", function(e) {
+  h.on("tap", function(e) {
     return state.apply(function() {
       return state.selected = false;
     });
