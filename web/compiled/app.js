@@ -194,26 +194,6 @@
     return a.slice().reverse();
   };
 
-  Hammer.gestures.Any = {
-    name: 'any',
-    index: 10,
-    defaults: {},
-    handler: function(ev, inst) {
-      return inst.trigger("any", ev);
-    }
-  };
-
-  Hammer.gestures.Down = {
-    name: 'down',
-    index: 100,
-    defaults: {},
-    handler: function(ev, inst) {
-      if (ev.eventType === Hammer.EVENT_START) {
-        return inst.trigger(this.name, ev);
-      }
-    }
-  };
-
   canvas = $("#c")[0];
 
   canvas.width = $("#c").parent().width();
@@ -478,9 +458,7 @@
 }, "hammer": function(exports, require, module) {(function() {
 
   module.exports = $(document).hammer({
-    drag_max_touches: 0,
-    tap_max_touchtime: Infinity,
-    tap_max_distance: 30
+    drag_max_touches: 0
   });
 
 }).call(this);

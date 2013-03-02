@@ -4,28 +4,6 @@ _.reverse = (a) ->
 
 
 
-
-Hammer.gestures.Any = {
-    name: 'any'
-    index: 10
-    defaults: {}
-    handler: (ev, inst) ->
-      inst.trigger("any", ev)
-};
-
-Hammer.gestures.Down = {
-  name: 'down'
-  index: 100
-  defaults: {}
-  handler: (ev, inst) ->
-    if ev.eventType == Hammer.EVENT_START
-      inst.trigger(this.name, ev)
-}
-
-
-
-
-
 canvas = $("#c")[0]
 canvas.width  = $("#c").parent().width()
 canvas.height = $("#c").parent().height()
@@ -44,28 +22,12 @@ require("touch")
 imageCount = 5
 
 state = require("state")
-
-# h = $("#sidebar").hammer({
-#   tap_max_touchtime  : Infinity
-#   tap_max_distance   : 30
-# })
 hammer = require("hammer")
 
 lastAction = 0
 threshold = 600
 onclick = (selector, callback) ->
   hammer.on("touch", selector, callback)
-
-  # $(document).on("click", selector, callback)
-
-  # hammer.on("tap", selector, (e) ->
-  #   result = false
-  #   now = Date.now()
-  #   if now > lastAction + threshold
-  #     result = callback.call(this, e)
-  #     lastAction = now
-  #   return result
-  # )
 
 
 onclick(".button-add", (e) ->

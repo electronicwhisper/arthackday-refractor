@@ -120,44 +120,11 @@ update = (touches) ->
   debug()
 
 
-# h = Hammer($("#c")[0], {drag_max_touches:0})
-# h = $("#c").hammer({drag_max_touches:0})
-
 h = require("hammer")
-
-# touching = false
-
-# h.on("touch", (e) ->
-#   touching = true
-#   e.gesture.preventDefault()
-#   if e.gesture.pointerType == Hammer.POINTER_MOUSE
-#     update(e.gesture.touches)
-# )
-# h.on("drag", (e) ->
-#   if e.gesture.pointerType == Hammer.POINTER_MOUSE
-#     update(e.gesture.touches)
-# )
-
-# h.on("release", (e) ->
-#   if e.gesture.pointerType == Hammer.POINTER_MOUSE
-#     tracking = {}
-# )
-
-
-# touchCallback = (e) ->
-#   if e.touches.length == 0
-#     touching = false
-#   else if touching
-#     update(e.touches)
-# document.addEventListener("touchstart", touchCallback, false)
-# document.addEventListener("touchmove", touchCallback, false)
-# document.addEventListener("touchend", touchCallback, false)
 
 h.on("drag touch", "#c", (e) ->
   touches = e.gesture.touches
   update(touches)
-
-  # e.gesture.preventDefault()
 )
 h.on("release", (e) ->
   touches = e.gesture.touches
