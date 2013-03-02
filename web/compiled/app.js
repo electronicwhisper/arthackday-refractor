@@ -286,7 +286,7 @@
 
 }).call(this);
 }, "draw": function(exports, require, module) {(function() {
-  var bounds, canvas, fragmentSrc, generate, s, shader, state, vertexSrc;
+  var bounds, canvas, fragmentSrc, generate, image, s, setImage, shader, state, vertexSrc;
 
   shader = require("shader");
 
@@ -317,15 +317,22 @@
     uniforms: require("bounds")()
   });
 
-  setTimeout(function() {
-    return s.draw({
-      uniforms: {
-        image: $("#totoro")[0],
-        resolution: [canvas.width, canvas.height],
-        imageResolution: [$("#totoro").width(), $("#totoro").height()]
-      }
-    });
-  }, 500);
+  image = new Image();
+
+  setImage = function(src) {
+    image.src = src;
+    return image.onload = function() {
+      return s.draw({
+        uniforms: {
+          image: image,
+          resolution: [canvas.width, canvas.height],
+          imageResolution: [image.width, image.height]
+        }
+      });
+    };
+  };
+
+  setImage("spirited_away.jpg");
 
   state.watch("globalTransform", function() {
     return _.pluck(state.chain, "transform");

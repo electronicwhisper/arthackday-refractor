@@ -33,25 +33,19 @@ s = shader({
 
 s.set({uniforms: require("bounds")()})
 
-# $("#totoro").on("load", (e) ->
-#   s.draw({
-#     uniforms: {
-#       image: $("#totoro")[0]
-#       resolution: [canvas.width, canvas.height]
-#       imageResolution: [$("#totoro").width(), $("#totoro").height()]
-#     }
-#   })
-# )
-setTimeout(->
-  s.draw({
-    uniforms: {
-      image: $("#totoro")[0]
-      resolution: [canvas.width, canvas.height]
-      imageResolution: [$("#totoro").width(), $("#totoro").height()]
-    }
-  })
-, 500)
+image = new Image()
+setImage = (src) ->
+  image.src = src
+  image.onload = ->
+    s.draw({
+      uniforms: {
+        image: image
+        resolution: [canvas.width, canvas.height]
+        imageResolution: [image.width, image.height]
+      }
+    })
 
+setImage("spirited_away.jpg")
 
 state.watch("globalTransform", ->
   _.pluck(state.chain, "transform")
