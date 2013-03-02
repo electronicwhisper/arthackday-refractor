@@ -188,10 +188,30 @@
 
 }).call(this);
 }, "app": function(exports, require, module) {(function() {
-  var canvas, changeImage, h, imageCount, koState, koUpdate, state;
+  var canvas, changeImage, hammer, imageCount, koState, koUpdate, lastAction, onclick, state, threshold;
 
   _.reverse = function(a) {
     return a.slice().reverse();
+  };
+
+  Hammer.gestures.Any = {
+    name: 'any',
+    index: 10,
+    defaults: {},
+    handler: function(ev, inst) {
+      return inst.trigger("any", ev);
+    }
+  };
+
+  Hammer.gestures.Down = {
+    name: 'down',
+    index: 100,
+    defaults: {},
+    handler: function(ev, inst) {
+      if (ev.eventType === Hammer.EVENT_START) {
+        return inst.trigger(this.name, ev);
+      }
+    }
   };
 
   canvas = $("#c")[0];
@@ -204,13 +224,21 @@
 
   require("touch");
 
-  imageCount = 2;
+  imageCount = 5;
 
   state = require("state");
 
-  h = $("#sidebar").hammer();
+  hammer = require("hammer");
 
-  h.on("tap", ".button-add", function(e) {
+  lastAction = 0;
+
+  threshold = 600;
+
+  onclick = function(selector, callback) {
+    return hammer.on("touch", selector, callback);
+  };
+
+  onclick(".button-add", function(e) {
     var distortion;
     distortion = ko.dataFor(this);
     state.apply(function() {
@@ -225,7 +253,7 @@
     return false;
   });
 
-  h.on("tap", ".button-remove", function(e) {
+  onclick(".button-remove", function(e) {
     var c;
     c = ko.dataFor(this);
     state.apply(function() {
@@ -234,7 +262,7 @@
     return false;
   });
 
-  h.on("tap", ".distortion", function(e) {
+  onclick(".distortion", function(e) {
     var c;
     c = ko.dataFor(this);
     state.apply(function() {
@@ -243,7 +271,7 @@
     return false;
   });
 
-  h.on("tap", function(e) {
+  onclick("#sidebar", function(e) {
     state.apply(function() {
       return state.selected = false;
     });
@@ -257,17 +285,17 @@
     });
   };
 
-  h.on("tap", ".button-image-prev", function(e) {
+  onclick(".button-image-prev", function(e) {
     changeImage(-1);
     return false;
   });
 
-  h.on("tap", ".button-image-next", function(e) {
+  onclick(".button-image-next", function(e) {
     changeImage(1);
     return false;
   });
 
-  h.on("tap", ".button-reset", function(e) {
+  onclick(".button-reset", function(e) {
     state.apply(function() {
       state.chain = [];
       return state.globalTransform = numeric.identity(3);
@@ -278,7 +306,6 @@
   koState = ko.observable();
 
   koUpdate = function() {
-    console.log("ko state update");
     return koState(state);
   };
 
@@ -446,6 +473,15 @@
   };
 
   module.exports = generate;
+
+}).call(this);
+}, "hammer": function(exports, require, module) {(function() {
+
+  module.exports = $(document).hammer({
+    drag_max_touches: 0,
+    tap_max_touchtime: Infinity,
+    tap_max_distance: 30
+  });
 
 }).call(this);
 }, "shader": function(exports, require, module) {
@@ -679,7 +715,7 @@ to set uniforms,
       f: "p.x = floor(p.x)"
     }, {
       title: "Wave",
-      f: "p.x = sin(p.x)"
+      f: "p.x = sin(p.x * 3.14159)"
     }
   ];
 
@@ -816,15 +852,12 @@ to set uniforms,
     return debug();
   };
 
-  h = $("#c").hammer({
-    drag_max_touches: 0
-  });
+  h = require("hammer");
 
-  h.on("drag touch", function(e) {
+  h.on("drag touch", "#c", function(e) {
     var touches;
     touches = e.gesture.touches;
-    update(touches);
-    return e.gesture.preventDefault();
+    return update(touches);
   });
 
   h.on("release", function(e) {

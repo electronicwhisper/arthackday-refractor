@@ -19,7 +19,7 @@ distortions = [
   }
   {
     title: "Wave"
-    f:     "p.x = sin(p.x)"
+    f:     "p.x = sin(p.x * 3.14159)"
   }
 ]
 
