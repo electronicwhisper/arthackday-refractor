@@ -209,11 +209,13 @@
   h = $("#sidebar").hammer();
 
   h.on("tap", ".button-add", function(e) {
+    var distortion;
+    distortion = ko.dataFor(this);
     state.apply(function() {
       var c;
       c = {
         transform: numeric.inv(state.globalTransform),
-        distortion: _.shuffle(state.distortions)[0]
+        distortion: distortion
       };
       state.chain.push(c);
       return state.selected = c;

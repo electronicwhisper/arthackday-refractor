@@ -15,11 +15,12 @@ state = require("state")
 
 h = $("#sidebar").hammer()
 h.on("tap", ".button-add", (e) ->
+  distortion = ko.dataFor(this)
   state.apply ->
     c = {
       # transform: numeric.identity(3)
       transform: numeric.inv(state.globalTransform)
-      distortion: _.shuffle(state.distortions)[0]
+      distortion: distortion
     }
     state.chain.push(c)
     state.selected = c

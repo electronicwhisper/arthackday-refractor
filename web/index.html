@@ -7,6 +7,10 @@
 body {
   background-color: #eee;
   font-family: Lucida Grande;
+  font-size: 18px;
+}
+button {
+  font-size: 18px;
 }
 #canvas-div {
   position: absolute;
@@ -25,10 +29,14 @@ body {
   color: #ccc;
 }
 
-.distortion {
+
+.row {
   padding: 12px;
+}
+.distortion {
   background-color: #333;
   border-bottom: 1px solid #555;
+
 }
 .distortion.selected {
   background-color: #555;
@@ -46,13 +54,19 @@ body {
 
 <div id="sidebar" data-bind="with: koState">
   <div data-bind="foreach: chain">
-    <div class="distortion" data-bind="css: {selected: $data === $parent.selected}">
+    <div class="distortion row" data-bind="css: {selected: $data === $parent.selected}">
       <button class="button-remove">X</button>
       <span data-bind="text: distortion.title"></span>
 
     </div>
   </div>
-  <button class="button-add">+</button>
+
+  <div style="margin-top: 36px" data-bind="foreach: distortions">
+    <div class="row">
+      <button class="button-add">+ <span data-bind="text: title"></span></button>
+    </div>
+  </div>
+  <!-- <button class="button-add">+</button> -->
 </div>
 
 <div id="debug" style="display: none; position: absolute; top: 40px; left: 40px; color: #f00"></div>
