@@ -45,7 +45,8 @@ setImage = (src) ->
       }
     })
 
-setImage("spirited_away.jpg")
+# setImage("spirited_away.jpg")
+setImage("images/#{0}.jpg")
 
 state.watch("globalTransform", ->
   _.pluck(state.chain, "transform")

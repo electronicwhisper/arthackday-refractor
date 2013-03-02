@@ -18,7 +18,7 @@ distortions = [
     f:     "p.x = floor(p.x)"
   }
   {
-    title: "Sine"
+    title: "Wave"
     f:     "p.x = sin(p.x)"
   }
 ]

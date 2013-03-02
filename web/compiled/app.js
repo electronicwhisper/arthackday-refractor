@@ -332,7 +332,7 @@
     };
   };
 
-  setImage("spirited_away.jpg");
+  setImage("images/" + 0 + ".jpg");
 
   state.watch("globalTransform", function() {
     return _.pluck(state.chain, "transform");
@@ -638,7 +638,7 @@ to set uniforms,
       title: "Step",
       f: "p.x = floor(p.x)"
     }, {
-      title: "Sine",
+      title: "Wave",
       f: "p.x = sin(p.x)"
     }
   ];
