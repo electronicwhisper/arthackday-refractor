@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Refractor</title>
 <style>
@@ -27,11 +28,18 @@ button {
   bottom: 0px;
   background-color: #222;
   color: #ccc;
+
+  overflow: hidden;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
 }
 
 
 .row {
   padding: 12px;
+}
+.section {
+  margin: 36px 0px;
 }
 .distortion {
   background-color: #333;
@@ -51,20 +59,29 @@ button {
 </div>
 
 <div id="sidebar" data-bind="with: koState">
-  <div data-bind="foreach: chain">
+
+  <div class="section" style="text-align: center">
+    <button class="button-image-prev">&lt;</button>
+    <img data-bind="attr: {src: 'images/' + image + '.jpg'}" height="96" style="vertical-align: middle" />
+    <button class="button-image-next">&gt;</button>
+  </div>
+
+  <div class="section" data-bind="foreach: chain">
     <div class="distortion row" data-bind="css: {selected: $data === $parent.selected}">
       <button class="button-remove">X</button>
       <span data-bind="text: distortion.title"></span>
-
     </div>
   </div>
 
-  <div style="margin-top: 36px" data-bind="foreach: distortions">
+  <div class="section" data-bind="foreach: distortions">
     <div class="row">
       <button class="button-add">+ <span data-bind="text: title"></span></button>
     </div>
   </div>
-  <!-- <button class="button-add">+</button> -->
+
+  <div class="section row">
+    <button class="button-reset">⟳ Reset</button>
+  </div>
 </div>
 
 <div id="debug" style="display: none; position: absolute; top: 40px; left: 40px; color: #f00"></div>

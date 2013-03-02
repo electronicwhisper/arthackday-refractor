@@ -11,6 +11,14 @@ require("touch")
 
 
 
+
+
+
+
+
+
+imageCount = 2
+
 state = require("state")
 
 h = $("#sidebar").hammer()
@@ -41,7 +49,29 @@ h.on("tap", ".distortion", (e) ->
 h.on("tap", (e) ->
   state.apply ->
     state.selected = false
+  return false
 )
+
+changeImage = (d) ->
+  state.apply ->
+    state.image += d
+    state.image = (state.image + imageCount) % imageCount
+h.on("tap", ".button-image-prev", (e) ->
+  changeImage(-1)
+  return false
+)
+h.on("tap", ".button-image-next", (e) ->
+  changeImage(1)
+  return false
+)
+
+h.on("tap", ".button-reset", (e) ->
+  state.apply ->
+    state.chain = []
+    state.globalTransform = numeric.identity(3)
+  return false
+)
+
 
 
 
@@ -50,7 +80,7 @@ koState = ko.observable()
 koUpdate = ->
   koState(state)
 koUpdate()
-state.watch("chain", "selected", ->
+state.watch("chain", "selected", "image", ->
   koUpdate()
 )
 

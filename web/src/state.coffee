@@ -29,6 +29,7 @@ state = new ReactiveScope({
   chain: []
   selected: false
   globalTransform: numeric.identity(3)
+  image: 0
 })
 
 state.watch("selected", "chain", ->

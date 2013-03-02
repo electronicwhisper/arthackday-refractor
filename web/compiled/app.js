@@ -188,7 +188,7 @@
 
 }).call(this);
 }, "app": function(exports, require, module) {(function() {
-  var canvas, h, koState, koUpdate, state;
+  var canvas, changeImage, h, imageCount, koState, koUpdate, state;
 
   _.reverse = function(a) {
     return a.slice().reverse();
@@ -203,6 +203,8 @@
   require("draw");
 
   require("touch");
+
+  imageCount = 2;
 
   state = require("state");
 
@@ -242,9 +244,35 @@
   });
 
   h.on("tap", function(e) {
-    return state.apply(function() {
+    state.apply(function() {
       return state.selected = false;
     });
+    return false;
+  });
+
+  changeImage = function(d) {
+    return state.apply(function() {
+      state.image += d;
+      return state.image = (state.image + imageCount) % imageCount;
+    });
+  };
+
+  h.on("tap", ".button-image-prev", function(e) {
+    changeImage(-1);
+    return false;
+  });
+
+  h.on("tap", ".button-image-next", function(e) {
+    changeImage(1);
+    return false;
+  });
+
+  h.on("tap", ".button-reset", function(e) {
+    state.apply(function() {
+      state.chain = [];
+      return state.globalTransform = numeric.identity(3);
+    });
+    return false;
   });
 
   koState = ko.observable();
@@ -255,7 +283,7 @@
 
   koUpdate();
 
-  state.watch("chain", "selected", function() {
+  state.watch("chain", "selected", "image", function() {
     return koUpdate();
   });
 
@@ -286,7 +314,7 @@
 
 }).call(this);
 }, "draw": function(exports, require, module) {(function() {
-  var bounds, canvas, fragmentSrc, generate, image, s, setImage, shader, state, vertexSrc;
+  var bounds, canvas, fragmentSrc, generate, image, s, setImage, shader, state, updateImage, vertexSrc;
 
   shader = require("shader");
 
@@ -332,7 +360,13 @@
     };
   };
 
-  setImage("images/" + 0 + ".jpg");
+  updateImage = function() {
+    return setImage("images/" + state.image + ".jpg");
+  };
+
+  updateImage();
+
+  state.watch("image", updateImage);
 
   state.watch("globalTransform", function() {
     return _.pluck(state.chain, "transform");
@@ -647,7 +681,8 @@ to set uniforms,
     distortions: distortions,
     chain: [],
     selected: false,
-    globalTransform: numeric.identity(3)
+    globalTransform: numeric.identity(3),
+    image: 0
   });
 
   state.watch("selected", "chain", function() {
