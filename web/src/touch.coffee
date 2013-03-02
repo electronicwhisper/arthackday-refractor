@@ -37,7 +37,7 @@ solveTouch = (touches, matrix) ->
   objective = (m) ->
     newMatrix = numeric.dot(m, matrix)
     error = 0
-    for touch in touches
+    for touch in touches[0...3]
       currentLocal = numeric.dot(newMatrix, touch.current)
       error += dist(touch.original, currentLocal)
     return error
@@ -57,6 +57,14 @@ solveTouch = (touches, matrix) ->
          [-r, s, y],
          [0,  0, 1]]
       , [1, 0, 0, 0]
+    )
+  else if touches.length >= 3
+    transform = solve(objective,
+      ([a, b, c, d, x, y]) ->
+        [[a, b, x],
+         [c, d, y],
+         [0,  0, 1]]
+      , [1, 0, 0, 1, 0, 0]
     )
 
   return numeric.dot(transform, matrix)
@@ -83,8 +91,10 @@ setMatrix = (m) ->
 
 tracking = {}
 
+debugCount = 0
 debug = ->
-  $("#debug").html(JSON.stringify(tracking))
+  # debugCount++
+  # $("#debug").html(debugCount + "<br>" + JSON.stringify(tracking))
 
 
 update = (touches) ->
@@ -121,8 +131,12 @@ h.on("drag touch", (e) ->
 )
 h.on("release", (e) ->
   touches = e.gesture.touches
-  for touch in touches
-    delete tracking[touch.identifier]
+  update(touches)
+  if e.gesture.pointerType == Hammer.POINTER_MOUSE
+    for touch in touches
+      delete tracking[touch.identifier]
+  debug()
+  return false
 )
 
 

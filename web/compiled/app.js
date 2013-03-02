@@ -703,7 +703,7 @@ to set uniforms,
 
 }).call(this);
 }, "touch": function(exports, require, module) {(function() {
-  var bounds, debug, dist, eventPosition, getMatrix, h, lerp, setMatrix, solve, solveTouch, state, tracking, update;
+  var bounds, debug, debugCount, dist, eventPosition, getMatrix, h, lerp, setMatrix, solve, solveTouch, state, tracking, update;
 
   solve = require("solve");
 
@@ -738,11 +738,12 @@ to set uniforms,
   solveTouch = function(touches, matrix) {
     var objective, transform;
     objective = function(m) {
-      var currentLocal, error, newMatrix, touch, _i, _len;
+      var currentLocal, error, newMatrix, touch, _i, _len, _ref;
       newMatrix = numeric.dot(m, matrix);
       error = 0;
-      for (_i = 0, _len = touches.length; _i < _len; _i++) {
-        touch = touches[_i];
+      _ref = touches.slice(0, 3);
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        touch = _ref[_i];
         currentLocal = numeric.dot(newMatrix, touch.current);
         error += dist(touch.original, currentLocal);
       }
@@ -760,6 +761,12 @@ to set uniforms,
         s = _arg[0], r = _arg[1], x = _arg[2], y = _arg[3];
         return [[s, r, x], [-r, s, y], [0, 0, 1]];
       }, [1, 0, 0, 0]);
+    } else if (touches.length >= 3) {
+      transform = solve(objective, function(_arg) {
+        var a, b, c, d, x, y;
+        a = _arg[0], b = _arg[1], c = _arg[2], d = _arg[3], x = _arg[4], y = _arg[5];
+        return [[a, b, x], [c, d, y], [0, 0, 1]];
+      }, [1, 0, 0, 1, 0, 0]);
     }
     return numeric.dot(transform, matrix);
   };
@@ -782,9 +789,9 @@ to set uniforms,
 
   tracking = {};
 
-  debug = function() {
-    return $("#debug").html(JSON.stringify(tracking));
-  };
+  debugCount = 0;
+
+  debug = function() {};
 
   update = function(touches) {
     var ids, matrix, newMatrix, t, touch, _i, _len;
@@ -821,14 +828,17 @@ to set uniforms,
   });
 
   h.on("release", function(e) {
-    var touch, touches, _i, _len, _results;
+    var touch, touches, _i, _len;
     touches = e.gesture.touches;
-    _results = [];
-    for (_i = 0, _len = touches.length; _i < _len; _i++) {
-      touch = touches[_i];
-      _results.push(delete tracking[touch.identifier]);
+    update(touches);
+    if (e.gesture.pointerType === Hammer.POINTER_MOUSE) {
+      for (_i = 0, _len = touches.length; _i < _len; _i++) {
+        touch = touches[_i];
+        delete tracking[touch.identifier];
+      }
     }
-    return _results;
+    debug();
+    return false;
   });
 
   $("#debug").html(JSON.stringify(bounds()));
