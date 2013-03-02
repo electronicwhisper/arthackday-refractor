@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Refractor</title>
+<link rel="stylesheet" type="text/css" href="vendor/typicons_kit/css/typicons.css">
 <style>
 body {
   background-color: #eee;
@@ -12,6 +13,9 @@ body {
 }
 button {
   font-size: 18px;
+}
+.typicn {
+  vertical-align: middle;
 }
 #canvas-div {
   position: absolute;
@@ -61,26 +65,26 @@ button {
 <div id="sidebar" data-bind="with: koState">
 
   <div class="section" style="text-align: center">
-    <button class="button-image-prev">&lt;</button>
+    <button class="button-image-prev"><span class="typicn previous"></span></button>
     <img data-bind="attr: {src: 'images/' + image + '.jpg'}" height="96" style="vertical-align: middle" />
-    <button class="button-image-next">&gt;</button>
+    <button class="button-image-next"><span class="typicn next"></span></button>
   </div>
 
   <div class="section" data-bind="foreach: chain">
     <div class="distortion row" data-bind="css: {selected: $data === $parent.selected}">
-      <button class="button-remove">X</button>
+      <button class="button-remove"><span class="typicn times"></span></button>
       <span data-bind="text: distortion.title"></span>
     </div>
   </div>
 
   <div class="section" data-bind="foreach: distortions">
     <div class="row">
-      <button class="button-add">+ <span data-bind="text: title"></span></button>
+      <button class="button-add"><span class="typicn plus"></span> <span data-bind="text: title"></span></button>
     </div>
   </div>
 
   <div class="section row">
-    <button class="button-reset">⟳ Reset</button>
+    <button class="button-reset"><span class="typicn refresh"></span> Reset</button>
   </div>
 </div>
 

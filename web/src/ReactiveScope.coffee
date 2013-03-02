@@ -1,5 +1,5 @@
 isPlainObject = (o) ->
-  o.constructor == Object
+  o != undefined && o.constructor == Object
   # $.isPlainObject(o)
 deepClone = (o) ->
   if _.isArray(o)

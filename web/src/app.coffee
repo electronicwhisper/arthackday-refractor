@@ -78,9 +78,10 @@ h.on("tap", ".button-reset", (e) ->
 
 koState = ko.observable()
 koUpdate = ->
+  console.log "ko state update"
   koState(state)
 koUpdate()
-state.watch("chain", "selected", "image", ->
+state.watch((-> state.selected?.distortion), "image", (-> _.pluck(state.chain, "distortion")), ->
   koUpdate()
 )
 

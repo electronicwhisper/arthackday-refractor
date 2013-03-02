@@ -54,7 +54,7 @@
     __slice = [].slice;
 
   isPlainObject = function(o) {
-    return o.constructor === Object;
+    return o !== void 0 && o.constructor === Object;
   };
 
   deepClone = function(o) {
@@ -278,12 +278,18 @@
   koState = ko.observable();
 
   koUpdate = function() {
+    console.log("ko state update");
     return koState(state);
   };
 
   koUpdate();
 
-  state.watch("chain", "selected", "image", function() {
+  state.watch((function() {
+    var _ref;
+    return (_ref = state.selected) != null ? _ref.distortion : void 0;
+  }), "image", (function() {
+    return _.pluck(state.chain, "distortion");
+  }), function() {
     return koUpdate();
   });
 
