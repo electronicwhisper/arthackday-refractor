@@ -3,10 +3,16 @@ _.reverse = (a) ->
 
 
 
-
-canvas = $("#c")[0]
-canvas.width  = $("#c").parent().width()
-canvas.height = $("#c").parent().height()
+$c = $("#c")
+canvas = $c[0]
+parentWidth  = $c.parent().width()
+parentHeight = $c.parent().height()
+$c.css({
+  width: parentWidth + "px"
+  height: parentHeight + "px"
+})
+canvas.width  = parentWidth  * 2
+canvas.height = parentHeight * 2
 
 require("draw")
 require("touch")
@@ -19,7 +25,7 @@ require("touch")
 
 
 
-imageCount = 5
+imageCount = 11
 
 state = require("state")
 hammer = require("hammer")

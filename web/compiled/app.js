@@ -188,23 +188,34 @@
 
 }).call(this);
 }, "app": function(exports, require, module) {(function() {
-  var canvas, changeImage, hammer, imageCount, koState, koUpdate, lastAction, onclick, state, threshold;
+  var $c, canvas, changeImage, hammer, imageCount, koState, koUpdate, lastAction, onclick, parentHeight, parentWidth, state, threshold;
 
   _.reverse = function(a) {
     return a.slice().reverse();
   };
 
-  canvas = $("#c")[0];
+  $c = $("#c");
 
-  canvas.width = $("#c").parent().width();
+  canvas = $c[0];
 
-  canvas.height = $("#c").parent().height();
+  parentWidth = $c.parent().width();
+
+  parentHeight = $c.parent().height();
+
+  $c.css({
+    width: parentWidth + "px",
+    height: parentHeight + "px"
+  });
+
+  canvas.width = parentWidth * 2;
+
+  canvas.height = parentHeight * 2;
 
   require("draw");
 
   require("touch");
 
-  imageCount = 5;
+  imageCount = 11;
 
   state = require("state");
 
@@ -342,10 +353,6 @@
   fragmentSrc = generate.code();
 
   canvas = $("#c")[0];
-
-  canvas.width = $("#c").parent().width();
-
-  canvas.height = $("#c").parent().height();
 
   s = shader({
     canvas: canvas,

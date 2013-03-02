@@ -21,8 +21,6 @@ void main() {
 fragmentSrc = generate.code()
 
 canvas = $("#c")[0]
-canvas.width  = $("#c").parent().width()
-canvas.height = $("#c").parent().height()
 
 s = shader({
   canvas: canvas
