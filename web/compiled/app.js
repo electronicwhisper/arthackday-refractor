@@ -215,7 +215,7 @@
 
   require("touch");
 
-  imageCount = 11;
+  imageCount = 16;
 
   state = require("state");
 
