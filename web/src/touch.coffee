@@ -30,15 +30,15 @@ eventPosition = (e) ->
 
 
 
-solveTouch = (touches, matrix) ->
+solveTouch = (touches) ->
   # touches is an array of {original: [x, y, 1], current: [x, y, 1]}
   # original should be in _local_ coordinates (i.e. original matrix already applied)
   # current should be in _event_ coordinates
   objective = (m) ->
-    newMatrix = numeric.dot(m, matrix)
     error = 0
     for touch in touches[0...3]
-      currentLocal = numeric.dot(newMatrix, touch.current)
+      currentLocal = toLocal(touch.current)
+      currentLocal = numeric.dot(m, currentLocal)
       error += dist(touch.original, currentLocal)
     return error
 
@@ -67,7 +67,7 @@ solveTouch = (touches, matrix) ->
       , [1, 0, 0, 1, 0, 0]
     )
 
-  return numeric.dot(transform, matrix)
+  return transform
 
 
 
@@ -88,6 +88,31 @@ setMatrix = (m) ->
   # _.last(state.chain).transform = m
 
 
+convertToPolar = (v) ->
+  r = Math.sqrt(v[0] * v[0] + v[1] * v[1])
+  a = Math.atan2(v[1], v[0])
+  return [r, a, 1]
+
+
+
+toLocal = (v) ->
+  v = numeric.dot(state.globalTransform, v)
+  if state.selected
+    if state.polarMode
+      v = convertToPolar(v)
+    v = numeric.dot(state.selected.transform, v)
+  return v
+
+applyMatrix = (m) ->
+  if state.selected
+    state.selected.transform = numeric.dot(m, state.selected.transform)
+  else
+    state.globalTransform = numeric.dot(m, state.globalTransform)
+
+
+
+
+
 
 tracking = {}
 
@@ -98,7 +123,7 @@ debug = ->
 
 
 update = (touches) ->
-  matrix = getMatrix()
+  # matrix = getMatrix()
   ids = []
   for touch in touches
     ids.push(touch.identifier)
@@ -107,15 +132,16 @@ update = (touches) ->
     else
       t = tracking[touch.identifier] = {}
       t.current = eventPosition(touch)
-      t.original = numeric.dot(matrix, t.current)
+      # t.original = numeric.dot(matrix, t.current)
+      t.original = toLocal(t.current)
 
   # Remove touches that have ended
   tracking = _.pick(tracking, ids)
 
   # Solve.
-  newMatrix = solveTouch(_.values(tracking), matrix)
+  transform = solveTouch(_.values(tracking))
   state.apply ->
-    setMatrix(newMatrix)
+    applyMatrix(transform)
 
   debug()
 
@@ -141,3 +167,40 @@ $("#debug").html(JSON.stringify(bounds()))
 
 
 
+
+angleIncrement = 0.02
+scaleIncrement = 1.02
+key(",", (e) ->
+  s = Math.cos(angleIncrement)
+  r = Math.sin(angleIncrement)
+  m = [[s,  r, 0],
+       [-r, s, 0],
+       [0,  0, 1]]
+  state.apply ->
+    applyMatrix(m)
+)
+key(".", (e) ->
+  s = Math.cos(-angleIncrement)
+  r = Math.sin(-angleIncrement)
+  m = [[s,  r, 0],
+       [-r, s, 0],
+       [0,  0, 1]]
+  state.apply ->
+    applyMatrix(m)
+)
+key("z", (e) ->
+  s = scaleIncrement
+  m = [[s, 0, 0],
+       [0, s, 0],
+       [0, 0, 1]]
+  state.apply ->
+    applyMatrix(m)
+)
+key("x", (e) ->
+  s = 1/scaleIncrement
+  m = [[s, 0, 0],
+       [0, s, 0],
+       [0, 0, 1]]
+  state.apply ->
+    applyMatrix(m)
+)

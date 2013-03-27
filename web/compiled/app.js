@@ -396,7 +396,7 @@
     });
   });
 
-  state.watch(function() {
+  state.watch("polarMode", function() {
     return _.pluck(state.chain, "distortion");
   }, function() {
     return s.draw({
@@ -423,10 +423,13 @@
       code += "uniform mat3 m" + i + ";\n";
       code += "uniform mat3 m" + i + "inv;\n";
     }
-    code += "\nvoid main() {\n  vec3 p = vec3(position, 1.);\n\n  //p.xy = vec2(length(p.xy), atan(p.y, p.x));\n";
+    code += "\nvoid main() {\n  vec3 p = vec3(position, 1.);\n";
     code += "\n";
     code += "p = globalTransform * p;";
     code += "\n";
+    if (state.polarMode) {
+      code += "\np.xy = vec2(length(p.xy), atan(p.y, p.x));\n";
+    }
     _ref1 = _.reverse(state.chain);
     for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
       c = _ref1[i];
@@ -437,7 +440,10 @@
       code += "p = m" + i + "inv * p;\n";
       code += "\n";
     }
-    code += "\n  //p.xy = vec2(p.x*cos(p.y), p.x*sin(p.y));\n\n  p.xy = (p.xy + 1.) * .5;\n\n  /*\n  if (p.x < 0. || p.x > 1. || p.y < 0. || p.y > 1.) {\n    // black if out of bounds\n    gl_FragColor = vec4(0., 0., 0., 1.);\n  } else {\n    gl_FragColor = texture2D(image, p.xy);\n  }\n  */\n\n  // mirror wrap it\n  p = abs(mod((p-1.), 2.)-1.);\n\n  gl_FragColor = texture2D(image, p.xy);\n}";
+    if (state.polarMode) {
+      code += "\np.xy = vec2(p.x*cos(p.y), p.x*sin(p.y));\n";
+    }
+    code += "\n  p.xy = (p.xy + 1.) * .5;\n\n  /*\n  if (p.x < 0. || p.x > 1. || p.y < 0. || p.y > 1.) {\n    // black if out of bounds\n    gl_FragColor = vec4(0., 0., 0., 1.);\n  } else {\n    gl_FragColor = texture2D(image, p.xy);\n  }\n  */\n\n  // mirror wrap it\n  p = abs(mod((p-1.), 2.)-1.);\n\n  gl_FragColor = texture2D(image, p.xy);\n}";
     return code;
   };
 
@@ -709,7 +715,8 @@ to set uniforms,
     chain: [],
     selected: false,
     globalTransform: numeric.identity(3),
-    image: 0
+    image: 0,
+    polarMode: false
   });
 
   state.watch("selected", "chain", function() {
@@ -724,7 +731,7 @@ to set uniforms,
 
 }).call(this);
 }, "touch": function(exports, require, module) {(function() {
-  var bounds, debug, debugCount, dist, eventPosition, getMatrix, h, lerp, setMatrix, solve, solveTouch, state, tracking, update;
+  var angleIncrement, applyMatrix, bounds, convertToPolar, debug, debugCount, dist, eventPosition, getMatrix, h, lerp, scaleIncrement, setMatrix, solve, solveTouch, state, toLocal, tracking, update;
 
   solve = require("solve");
 
@@ -756,16 +763,16 @@ to set uniforms,
     return [x, y, 1];
   };
 
-  solveTouch = function(touches, matrix) {
+  solveTouch = function(touches) {
     var objective, transform;
     objective = function(m) {
-      var currentLocal, error, newMatrix, touch, _i, _len, _ref;
-      newMatrix = numeric.dot(m, matrix);
+      var currentLocal, error, touch, _i, _len, _ref;
       error = 0;
       _ref = touches.slice(0, 3);
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         touch = _ref[_i];
-        currentLocal = numeric.dot(newMatrix, touch.current);
+        currentLocal = toLocal(touch.current);
+        currentLocal = numeric.dot(m, currentLocal);
         error += dist(touch.original, currentLocal);
       }
       return error;
@@ -789,7 +796,7 @@ to set uniforms,
         return [[a, b, x], [c, d, y], [0, 0, 1]];
       }, [1, 0, 0, 1, 0, 0]);
     }
-    return numeric.dot(transform, matrix);
+    return transform;
   };
 
   getMatrix = function() {
@@ -808,6 +815,32 @@ to set uniforms,
     }
   };
 
+  convertToPolar = function(v) {
+    var a, r;
+    r = Math.sqrt(v[0] * v[0] + v[1] * v[1]);
+    a = Math.atan2(v[1], v[0]);
+    return [r, a, 1];
+  };
+
+  toLocal = function(v) {
+    v = numeric.dot(state.globalTransform, v);
+    if (state.selected) {
+      if (state.polarMode) {
+        v = convertToPolar(v);
+      }
+      v = numeric.dot(state.selected.transform, v);
+    }
+    return v;
+  };
+
+  applyMatrix = function(m) {
+    if (state.selected) {
+      return state.selected.transform = numeric.dot(m, state.selected.transform);
+    } else {
+      return state.globalTransform = numeric.dot(m, state.globalTransform);
+    }
+  };
+
   tracking = {};
 
   debugCount = 0;
@@ -815,8 +848,7 @@ to set uniforms,
   debug = function() {};
 
   update = function(touches) {
-    var ids, matrix, newMatrix, t, touch, _i, _len;
-    matrix = getMatrix();
+    var ids, t, touch, transform, _i, _len;
     ids = [];
     for (_i = 0, _len = touches.length; _i < _len; _i++) {
       touch = touches[_i];
@@ -826,13 +858,13 @@ to set uniforms,
       } else {
         t = tracking[touch.identifier] = {};
         t.current = eventPosition(touch);
-        t.original = numeric.dot(matrix, t.current);
+        t.original = toLocal(t.current);
       }
     }
     tracking = _.pick(tracking, ids);
-    newMatrix = solveTouch(_.values(tracking), matrix);
+    transform = solveTouch(_.values(tracking));
     state.apply(function() {
-      return setMatrix(newMatrix);
+      return applyMatrix(transform);
     });
     return debug();
   };
@@ -860,6 +892,48 @@ to set uniforms,
   });
 
   $("#debug").html(JSON.stringify(bounds()));
+
+  angleIncrement = 0.02;
+
+  scaleIncrement = 1.02;
+
+  key(",", function(e) {
+    var m, r, s;
+    s = Math.cos(angleIncrement);
+    r = Math.sin(angleIncrement);
+    m = [[s, r, 0], [-r, s, 0], [0, 0, 1]];
+    return state.apply(function() {
+      return applyMatrix(m);
+    });
+  });
+
+  key(".", function(e) {
+    var m, r, s;
+    s = Math.cos(-angleIncrement);
+    r = Math.sin(-angleIncrement);
+    m = [[s, r, 0], [-r, s, 0], [0, 0, 1]];
+    return state.apply(function() {
+      return applyMatrix(m);
+    });
+  });
+
+  key("z", function(e) {
+    var m, s;
+    s = scaleIncrement;
+    m = [[s, 0, 0], [0, s, 0], [0, 0, 1]];
+    return state.apply(function() {
+      return applyMatrix(m);
+    });
+  });
+
+  key("x", function(e) {
+    var m, s;
+    s = 1 / scaleIncrement;
+    m = [[s, 0, 0], [0, s, 0], [0, 0, 1]];
+    return state.apply(function() {
+      return applyMatrix(m);
+    });
+  });
 
 }).call(this);
 }});

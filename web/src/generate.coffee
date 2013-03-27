@@ -27,13 +27,18 @@ generate.code = ->
     void main() {
       vec3 p = vec3(position, 1.);
 
-      //p.xy = vec2(length(p.xy), atan(p.y, p.x));
-
     """
 
   code += "\n"
   code += "p = globalTransform * p;"
   code += "\n"
+
+  if state.polarMode
+    code += """
+
+      p.xy = vec2(length(p.xy), atan(p.y, p.x));
+
+    """
 
   for c, i in _.reverse(state.chain)
     f = c.distortion.f
@@ -43,9 +48,14 @@ generate.code = ->
     code += "p = m#{i}inv * p;\n"
     code += "\n"
 
-  code += """
+  if state.polarMode
+    code += """
 
-      //p.xy = vec2(p.x*cos(p.y), p.x*sin(p.y));
+      p.xy = vec2(p.x*cos(p.y), p.x*sin(p.y));
+
+    """
+
+  code += """
 
       p.xy = (p.xy + 1.) * .5;
 

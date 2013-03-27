@@ -57,7 +57,7 @@ state.watch("globalTransform", ->
   })
 )
 
-state.watch(->
+state.watch("polarMode", ->
   _.pluck(state.chain, "distortion")
 , ->
   s.draw({
