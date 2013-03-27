@@ -86,7 +86,13 @@ onclick(".button-reset", (e) ->
   return false
 )
 
-
+# Horrible hack. Need to use a better reactive framework or something.
+$(document).on("change", "input[type='checkbox']", (e) ->
+  setTimeout(->
+    state.apply ->
+      true
+  , 100)
+)
 
 
 

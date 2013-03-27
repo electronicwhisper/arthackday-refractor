@@ -294,6 +294,14 @@
     return false;
   });
 
+  $(document).on("change", "input[type='checkbox']", function(e) {
+    return setTimeout(function() {
+      return state.apply(function() {
+        return true;
+      });
+    }, 100);
+  });
+
   koState = ko.observable();
 
   koUpdate = function() {
